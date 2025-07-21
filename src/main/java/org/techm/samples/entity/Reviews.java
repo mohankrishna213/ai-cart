@@ -86,7 +86,6 @@ public class Reviews {
 	}
 	public Reviews() {
 		super();
-		
 	}
 	
 	
