@@ -48,10 +48,10 @@ public class Product {
 	public void setPrice(double price) {
 		this.price = price;
 	}
-		public Product(int id, String name, String description, double price, boolean available, int stockQuantity,
+		public Product( String name, String description, double price, boolean available, int stockQuantity,
 			String imageUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
 		super();
-		this.id = id;
+		
 		this.name = name;
 		this.description = description;
 		this.price = price;
