@@ -65,10 +65,18 @@ public class Reviews {
 	public void setUpdated_at(LocalDate updated_at) {
 		this.updated_at = updated_at;
 	}
-	public Reviews(Long id, User user, String title, String content, double rating, LocalDate created_at,
-			LocalDate updated_at) {
+	
+	public Product getProduct() {
+		return product;
+	}
+	public void setProduct(Product product) {
+		this.product = product;
+	}
+	public Reviews(Product product, User user, String title, String content, double rating,
+			LocalDate created_at, LocalDate updated_at) {
 		super();
-		this.id = id;
+		
+		this.product = product;
 		this.user = user;
 		this.title = title;
 		this.content = content;
@@ -78,7 +86,9 @@ public class Reviews {
 	}
 	public Reviews() {
 		super();
+		
 	}
+	
 	
 	
 }
