@@ -1,12 +1,15 @@
 package org.techm.samples.entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 @Entity
 public class Reviews {
@@ -14,15 +17,30 @@ public class Reviews {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
-	@ManyToOne
-	private Product product;
-	@ManyToOne
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "product_id")
+	private Products product;
+	
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "user_id")
 	private User user;
+	
 	private String title;
 	private String content;
 	private double rating;
-	private LocalDate created_at;
-	private LocalDate updated_at;
+	private LocalDateTime created_at;
+	private LocalDateTime updated_at;
+	
+	@PrePersist
+	protected void onCreate() {
+		created_at=updated_at=LocalDateTime.now();
+	}
+	
+	@PreUpdate
+	protected void onUpdate() {
+		updated_at=LocalDateTime.now();
+	}
+	
 	public Long getId() {
 		return id;
 	}
@@ -53,27 +71,27 @@ public class Reviews {
 	public void setRating(double rating) {
 		this.rating = rating;
 	}
-	public LocalDate getCreated_at() {
+	public LocalDateTime getCreated_at() {
 		return created_at;
 	}
-	public void setCreated_at(LocalDate created_at) {
+	public void setCreated_at(LocalDateTime created_at) {
 		this.created_at = created_at;
 	}
-	public LocalDate getUpdated_at() {
+	public LocalDateTime getUpdated_at() {
 		return updated_at;
 	}
-	public void setUpdated_at(LocalDate updated_at) {
+	public void setUpdated_at(LocalDateTime updated_at) {
 		this.updated_at = updated_at;
 	}
 	
-	public Product getProduct() {
+	public Products getProduct() {
 		return product;
 	}
-	public void setProduct(Product product) {
+	public void setProduct(Products product) {
 		this.product = product;
 	}
-	public Reviews(Product product, User user, String title, String content, double rating,
-			LocalDate created_at, LocalDate updated_at) {
+	public Reviews(Products product, User user, String title, String content, double rating,
+			LocalDateTime created_at, LocalDateTime updated_at) {
 		super();
 		
 		this.product = product;

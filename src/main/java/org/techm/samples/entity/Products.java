@@ -1,33 +1,59 @@
 package org.techm.samples.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 @Entity
-public class Product {
+public class Products {
 	
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-
-    private int id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+	
     private String name;
     private String description;
     private double price;
-    
-    private Categories categories;
-    private boolean available;
-    private int stockQuantity;
+    private boolean available=true;
+    private Integer stockQuantity=0;
     private String imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-	public int getId() {
+    
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "category_id")
+    private Categories category;
+    
+    @OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Reviews> reviews;
+    
+    @OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Wishlist_items> wishlist_items;
+    
+    @PrePersist
+    protected void onCreate() {
+    	createdAt=updatedAt=LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+    	updatedAt=LocalDateTime.now();
+    }
+    
+	public Long getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 	public String getName() {
@@ -48,7 +74,8 @@ public class Product {
 	public void setPrice(double price) {
 		this.price = price;
 	}
-		public Product( String name, String description, double price, boolean available, int stockQuantity,
+	
+	public Products( String name, String description, double price, boolean available, int stockQuantity,
 			String imageUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
 		super();
 		
@@ -61,7 +88,8 @@ public class Product {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 	}
-		@Override
+	
+	@Override
 	public String toString() {
 		return "Product [id=" + id + ", name=" + name + ", description=" + description + ", price=" + price
 				+ ", available=" + available + ", stockQuantity=" + stockQuantity + ", imageUrl=" + imageUrl
@@ -97,17 +125,7 @@ public class Product {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
-	public Product() {
+	public Products() {
 		super();
 	}
-	public Categories getCategories() {
-		return categories;
-	}
-	public void setCategories(Categories categories) {
-		this.categories = categories;
-	}
-
-    
-    
-
 }

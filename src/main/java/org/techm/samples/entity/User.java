@@ -1,13 +1,18 @@
 package org.techm.samples.entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 @Entity
 public class User {
@@ -18,14 +23,23 @@ public class User {
 	private String username;
 	private String password;
 	private String email;
-	private LocalDate created_at;
-	private LocalDate updated_at;
+	private LocalDateTime created_at;
+	private LocalDateTime updated_at;
+	
+	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
+	private List<Reviews> reviews;
+	
+	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
+	private List<Wishlist_items> wishlist_items;
+	
+	@Enumerated(EnumType.STRING)
+	private Role role;
 	
 	public User() {
 		super();
 	}
 
-	public User(String username, String email, LocalDate created_at, LocalDate updated_at, Role role) {
+	public User(String username, String email, LocalDateTime created_at, LocalDateTime updated_at, Role role) {
 		super();
 		this.username = username;
 		this.email = email;
@@ -42,24 +56,15 @@ public class User {
 		this.email = email;
 	}
 
-	public LocalDate getCreated_at() {
-		return created_at;
+	@PrePersist
+	protected void onCreate() {
+		created_at=updated_at=LocalDateTime.now();
 	}
 
-	public void setCreated_at(LocalDate created_at) {
-		this.created_at = created_at;
+	@PreUpdate
+	protected void onUpdate() {
+		updated_at=LocalDateTime.now();
 	}
-
-	public LocalDate getUpdated_at() {
-		return updated_at;
-	}
-
-	public void setUpdated_at(LocalDate updated_at) {
-		this.updated_at = updated_at;
-	}
-
-	@Enumerated(EnumType.STRING)
-	private Role role;
 
 	public Long getId() {
 		return id;
@@ -91,6 +96,38 @@ public class User {
 
 	public void setRole(Role role) {
 		this.role = role;
+	}
+
+	public LocalDateTime getCreated_at() {
+		return created_at;
+	}
+
+	public void setCreated_at(LocalDateTime created_at) {
+		this.created_at = created_at;
+	}
+
+	public LocalDateTime getUpdated_at() {
+		return updated_at;
+	}
+
+	public void setUpdated_at(LocalDateTime updated_at) {
+		this.updated_at = updated_at;
+	}
+
+	public List<Reviews> getReviews() {
+		return reviews;
+	}
+
+	public void setReviews(List<Reviews> reviews) {
+		this.reviews = reviews;
+	}
+
+	public List<Wishlist_items> getWishlist_items() {
+		return wishlist_items;
+	}
+
+	public void setWishlist_items(List<Wishlist_items> wishlist_items) {
+		this.wishlist_items = wishlist_items;
 	}
 
 	@Override
