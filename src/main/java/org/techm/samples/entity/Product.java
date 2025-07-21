@@ -18,6 +18,7 @@ public class Product {
     private String description;
     private double price;
     
+    private Categories categories;
     private boolean available;
     private int stockQuantity;
     private String imageUrl;
@@ -98,6 +99,12 @@ public class Product {
 	}
 	public Product() {
 		super();
+	}
+	public Categories getCategories() {
+		return categories;
+	}
+	public void setCategories(Categories categories) {
+		this.categories = categories;
 	}
 
     
