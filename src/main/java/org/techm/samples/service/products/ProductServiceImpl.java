@@ -1,4 +1,4 @@
-package org.techm.samples.service;
+package org.techm.samples.service.products;
 
 import java.util.List;
 
