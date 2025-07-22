@@ -18,5 +18,5 @@ public interface ProductService {
 	
 	Products updateProduct(Products product,Long id);
 	
-	
+	List<Products> getProductsContaining(String keyword);
 }

@@ -34,7 +34,7 @@ public class ProductServiceImpl implements ProductService {
 
 	@Override
 	public List<Products> getProductByName(String name) {
-		List<Products> products=productRepo.getProductByName(name);
+		List<Products> products=productRepo.findByName(name);
 		return products;
 	}
 
@@ -57,8 +57,10 @@ public class ProductServiceImpl implements ProductService {
 		
 	}
 	
-	
-	
+	@Override
+	public List<Products> getProductsContaining(String keyword) {
+		return productRepo.findByNameContaining(keyword);
+	}
 	
 	
 }
