@@ -27,14 +27,8 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public List<Products> getAll() {
+	public List<Products> getAllProducts() {
 		List<Products> products=productRepo.findAll();
-		return products;
-	}
-
-	@Override
-	public List<Products> getProductByName(String name) {
-		List<Products> products=productRepo.findByName(name);
 		return products;
 	}
 
@@ -63,5 +57,29 @@ public class ProductServiceImpl implements ProductService {
 		return productRepo.findByNameContaining(keyword);
 	}
 	
-	
+	@Override
+	public List<Products> getProductsByCategory(Long categoryId) {
+	    return productRepo.findByCategoryId(categoryId);
+	}
+
+	@Override
+	public List<Products> getAvailableProducts() {
+	    return productRepo.findByAvailableTrue();
+	}
+
+	@Override
+	public List<Products> searchProductsByName(String keyword) {
+	    return productRepo.findByNameContainingIgnoreCase(keyword);
+	}
+
+	@Override
+	public List<Products> getProductsByPriceRange(double minPrice, double maxPrice) {
+	    return productRepo.findByPriceBetween(minPrice, maxPrice);
+	}
+
+	@Override
+	public List<Products> getTopRatedProducts() {
+	    return productRepo.findTopRatedProducts();
+	}
+
 }
