@@ -1,43 +1,43 @@
 package org.techm.samples.service.products;
-
+ 
 import java.util.List;
-
+ 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.techm.samples.entity.Products;
 import org.techm.samples.repository.ProductsRepository;
-
+ 
 @Service
 public class ProductServiceImpl implements ProductService {
-
+ 
 	@Autowired
 	private ProductsRepository productRepo;
-
+ 
 	@Override
 	public Products addProduct(Products product) {
 		productRepo.save(product);
 		return product;
 		
 	}
-
+ 
 	@Override
 	public Products getProductById(Long id) {
 		Products product=productRepo.findById(id).orElse(null);
 		return product;
 	}
-
+ 
 	@Override
 	public List<Products> getAllProducts() {
 		List<Products> products=productRepo.findAll();
 		return products;
 	}
-
+ 
 	@Override
 	public void deleteProduct(Long id) {
 		productRepo.deleteById(id);
 		
 	}
-
+ 
 	@Override
 	public Products updateProduct(Products product,Long id) {
 		Products updatedProduct=productRepo.findById(id).orElse(product);
@@ -61,25 +61,25 @@ public class ProductServiceImpl implements ProductService {
 	public List<Products> getProductsByCategory(Long categoryId) {
 	    return productRepo.findByCategoryId(categoryId);
 	}
-
+ 
 	@Override
 	public List<Products> getAvailableProducts() {
 	    return productRepo.findByAvailableTrue();
 	}
-
+ 
 	@Override
 	public List<Products> searchProductsByName(String keyword) {
 	    return productRepo.findByNameContainingIgnoreCase(keyword);
 	}
-
+ 
 	@Override
 	public List<Products> getProductsByPriceRange(double minPrice, double maxPrice) {
 	    return productRepo.findByPriceBetween(minPrice, maxPrice);
 	}
-
+ 
 	@Override
 	public List<Products> getTopRatedProducts() {
 	    return productRepo.findTopRatedProducts();
 	}
-
+ 
 }
