@@ -95,7 +95,7 @@ public class Products {
 				+ ", available=" + available + ", stockQuantity=" + stockQuantity + ", imageUrl=" + imageUrl
 				+ ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
 	}
-		public boolean isAvailable() {
+	public boolean isAvailable() {
 		return available;
 	}
 	public void setAvailable(boolean available) {
