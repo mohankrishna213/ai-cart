@@ -104,9 +104,6 @@ public class Products {
 	public int getStockQuantity() {
 		return stockQuantity;
 	}
-	public void setStockQuantity(int stockQuantity) {
-		this.stockQuantity = stockQuantity;
-	}
 	public String getImageUrl() {
 		return imageUrl;
 	}
@@ -125,6 +122,35 @@ public class Products {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
+	
+	public Categories getCategory() {
+		return category;
+	}
+
+	public void setCategory(Categories category) {
+		this.category = category;
+	}
+
+	public List<Reviews> getReviews() {
+		return reviews;
+	}
+
+	public void setReviews(List<Reviews> reviews) {
+		this.reviews = reviews;
+	}
+
+	public List<Wishlist_items> getWishlist_items() {
+		return wishlist_items;
+	}
+
+	public void setWishlist_items(List<Wishlist_items> wishlist_items) {
+		this.wishlist_items = wishlist_items;
+	}
+
+	public void setStockQuantity(Integer stockQuantity) {
+		this.stockQuantity = stockQuantity;
+	}
+
 	public Products() {
 		super();
 	}
