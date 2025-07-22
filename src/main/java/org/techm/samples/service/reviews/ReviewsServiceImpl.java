@@ -1,24 +1,33 @@
 package org.techm.samples.service.reviews;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.techm.samples.entity.Products;
 import org.techm.samples.entity.Reviews;
+import org.techm.samples.entity.User;
 import org.techm.samples.repository.ReviewsRepository;
 
 @Service
 public class ReviewsServiceImpl implements ReviewsService {
-@Autowired
-private ReviewsRepository reviewsRepository;
+	@Autowired
+	private ReviewsRepository reviewsRepository;
+	
 	@Override
 	public Reviews addReview(Reviews review) {
-		
-		return reviewsRepository.save(review);
-	}
+        Optional<Reviews> existingReview = reviewsRepository.findByProductAndUser(review.getProduct(), review.getUser());
+        if (existingReview.isPresent()) {
+            throw new IllegalStateException("User has already reviewed this product.");
+        }
+        return reviewsRepository.save(review);
+    }
 
 	@Override
-	public List<Reviews> getAll() {
-		return reviewsRepository.findAll();			}
+	public List<Reviews> getAllReviews() {
+		return reviewsRepository.findAll();			
+	}
 
 	@Override
 	public Reviews getReviewById(Reviews review) {
@@ -28,10 +37,17 @@ private ReviewsRepository reviewsRepository;
 
 	@Override
 	public void deleteReview(Long id) {
-	
 		reviewsRepository.deleteById(id);
-		
-		
 	}
+	
+	@Override
+	public List<Reviews> getReviewsByProduct(Products product) {
+        return reviewsRepository.findAllByProduct(product);
+    }
 
-} 
+	@Override
+	public Optional<Reviews> getReviewByProductAndUser(Products product, User user) {
+        return reviewsRepository.findByProductAndUser(product, user);
+    }
+
+}
