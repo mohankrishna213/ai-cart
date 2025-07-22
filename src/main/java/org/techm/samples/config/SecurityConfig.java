@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -35,17 +34,30 @@ public class SecurityConfig {
         this.passwordEncoder = passwordEncoder;
     }
 
-
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/welcome", "/auth/generateToken","/auth/register").permitAll()
+                // Public endpoints
+                .requestMatchers(
+                    "/auth/welcome",
+                    "/auth/generateToken",
+                    "/auth/register",
+                    "/auth/registerPage",
+                    "/auth/registerUser",
+                    "/auth/loginPage",
+                    "/auth/loginUser",
+                    "/css/**",
+                    "/js/**",
+                    "/images/**"
+                ).permitAll()
+
+                // Role-based access
                 .requestMatchers("/auth/user/**").hasAuthority("CUSTOMER")
                 .requestMatchers("/auth/admin/**").hasAuthority("ADMIN")
+
+                // All other requests require authentication
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -55,7 +67,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -64,7 +75,6 @@ public class SecurityConfig {
         return provider;
     }
 
-    
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

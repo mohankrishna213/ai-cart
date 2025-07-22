@@ -5,41 +5,45 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.techm.samples.dto.AuthRequest;
+import org.techm.samples.entity.Role;
 import org.techm.samples.entity.User;
 import org.techm.samples.service.auth.JwtService;
 import org.techm.samples.service.auth.UserInfoService;
 
-@RestController
+@Controller
 @RequestMapping("/auth")
 public class UserController {
 
-	@Autowired
+    @Autowired
     private UserInfoService service;
 
-	@Autowired
+    @Autowired
     private JwtService jwtService;
-    
+
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    // REST endpoint (not secured)
     @GetMapping("/welcome")
+    @ResponseBody
     public String welcome() {
-        return "Welcome this endpoint is not secure";
+        return "Welcome! This endpoint is not secure.";
     }
 
-    @PostMapping("/register")
-    public String addNewUser(@RequestBody User userInfo) {
-        return service.addUser(userInfo);
-    }
+//    // REST endpoint for registration
+//    @PostMapping("/register")
+//    @ResponseBody
+//    public String addNewUser(@RequestBody User userInfo) {
+//        return service.addUser(userInfo);
+//    }
 
-
+    // REST endpoint for token generation
     @PostMapping("/generateToken")
+    @ResponseBody
     public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
@@ -50,8 +54,42 @@ public class UserController {
             throw new UsernameNotFoundException("Invalid user request!");
         }
     }
-    @GetMapping("/user/userProfile")
-    public String userProfile() {
-    	return "welcome to user profile";
+
+    // Thymeleaf: Show registration page
+    @GetMapping("/registerPage")
+    public String showRegisterPage(Model model) {
+        model.addAttribute("user", new User());
+        return "register"; // maps to register.html
+    }
+
+    // Thymeleaf: Handle registration form
+    @PostMapping("/registerUser")
+    public String registerUser(@ModelAttribute("user") User user) {
+    	user.setRole(Role.CUSTOMER);
+        service.addUser(user);
+        return "redirect:/auth/loginPage";
+    }
+
+    // Thymeleaf: Show login page
+    @GetMapping("/loginPage")
+    public String showLoginPage(Model model) {
+        model.addAttribute("authRequest", new AuthRequest());
+        return "login"; // maps to login.html
+    }
+
+    // Thymeleaf: Handle login form
+    @PostMapping("/loginUser")
+    public String loginUser(@ModelAttribute("authRequest") AuthRequest authRequest, Model model) {
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
+        );
+        if (authentication.isAuthenticated()) {
+            String token = jwtService.generateToken(authRequest.getUsername());
+            model.addAttribute("token", token);
+            return "userProfile"; // maps to userProfile.html
+        } else {
+            model.addAttribute("error", "Invalid credentials");
+            return "login";
+        }
     }
 }

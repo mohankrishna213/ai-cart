@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Register</title>
-<link rel="stylesheet" th:href="@{/css/register.css}">
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" th:href="@{/css/register.css}">
 </head>
 <body>
-<div class="form-container">
-<h3>Register</h3>
-<form th:action="@{/register}" method="post" th:object="${user}">
-<label for="username">Username:</label>
-<input type="text" id="username" th:field="*{username}" required placeholder="Enter your username">
- 
+  <div class="form-container">
+    <h3>Register</h3>
+    <form th:action="@{/auth/registerUser}" method="post" th:object="${user}">
+      <label for="username">Username:</label>
+      <input type="text" id="username" th:field="*{username}" required placeholder="Enter your username">
+
       <label for="email">Email:</label>
-<input type="email" id="email" th:field="*{email}" required placeholder="Enter your email">
- 
+      <input type="email" id="email" th:field="*{email}" required placeholder="Enter your email">
+
       <label for="password">Password:</label>
-<input type="password" id="password" th:field="*{password}" required placeholder="Enter your password">
- 
+      <input type="password" id="password" th:field="*{password}" required placeholder="Enter your password">
+
       <label for="confirmPassword">Confirm Password:</label>
-<input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
- 
+      <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+
       <input type="submit" value="Register">
-</form>
-<p>Already have an account? <a th:href="@{/login}">Login here</a></p>
-</div>
+    </form>
+    <p>Already have an account? <a th:href="@{/auth/loginPage}">Login here</a></p>
+  </div>
 </body>
 </html>
