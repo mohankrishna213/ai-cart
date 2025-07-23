@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.techm.samples.dto.ProductsDTO;
 import org.techm.samples.dto.WishlistItemsDTO;
 import org.techm.samples.entity.Products;
 import org.techm.samples.entity.Wishlist_items;
@@ -45,47 +46,51 @@ public class ProductsController {
 	private UserInfoRepository userInfoRepository;
 	
 	@GetMapping
-    public ResponseEntity<Page<Products>> getAllProducts(@RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<Page<ProductsDTO>> getAllProducts(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "12") int size,
                                  @RequestParam(defaultValue = "name") String sortBy,
                                  @RequestParam(defaultValue = "asc") String sortDir) {
-		Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-	    Pageable pageable = PageRequest.of(page, size, sort);
+    Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+    Pageable pageable = PageRequest.of(page, size, sort);
+    Page<Products> products = productService.getAllProducts(pageable);
+    Page<ProductsDTO> dtoPage = products.map(this::toProductsDTO);
+    return new ResponseEntity<>(dtoPage, HttpStatus.OK);
+}
 
-	    Page<Products> products = productService.getAllProducts(pageable);
-	    
-	    return new ResponseEntity<>(products,HttpStatus.OK);
-	}
-	
 	@GetMapping("/search")
-    public ResponseEntity<List<Products>> searchProducts(@RequestParam String q,
+    public ResponseEntity<List<ProductsDTO>> searchProducts(@RequestParam String q,
                                  @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "12") int size) {
+    List<Products> products = productService.searchProductsByName(q);
+    List<ProductsDTO> dtoList = products.stream().map(this::toProductsDTO).toList();
+    return new ResponseEntity<>(dtoList, HttpStatus.OK);
+}
 
-        Pageable pageable = PageRequest.of(page, size);
-        List<Products> products = productService.searchProductsByName(q);
-        return new ResponseEntity<>(products,HttpStatus.OK);
-	}
-	
 	@GetMapping("/{id}")
-    public ResponseEntity<Products> getProductById(@PathVariable Long id) {
-        Products product = productService.getProductById(id);
-        return new ResponseEntity<>(product,HttpStatus.OK);
+    public ResponseEntity<ProductsDTO> getProductById(@PathVariable Long id) {
+    Products product = productService.getProductById(id);
+    if (product == null) {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-	
+    return new ResponseEntity<>(toProductsDTO(product), HttpStatus.OK);
+}
+
 	@PostMapping("/admin")
 	@PreAuthorize("hasAuthority('ADMIN')")
-	public ResponseEntity<Products> createProduct(@RequestBody Products products){
-		productService.addProduct(products);
-		return new ResponseEntity<>(products,HttpStatus.CREATED);
-	}
-	
+	public ResponseEntity<ProductsDTO> createProduct(@RequestBody ProductsDTO productsDTO){
+    Products product = toProductsEntity(productsDTO);
+    Products saved = productService.addProduct(product);
+    return new ResponseEntity<>(toProductsDTO(saved), HttpStatus.CREATED);
+}
+
 	@PostMapping("/admin/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Products> updateProduct(@PathVariable Long id, @RequestBody Products product) {
-		return new ResponseEntity<>(productService.updateProduct(product, id),HttpStatus.CREATED);
-    }
-	
+    public ResponseEntity<ProductsDTO> updateProduct(@PathVariable Long id, @RequestBody ProductsDTO productsDTO) {
+    Products product = toProductsEntity(productsDTO);
+    Products updated = productService.updateProduct(product, id);
+    return new ResponseEntity<>(toProductsDTO(updated), HttpStatus.CREATED);
+}
+
 	@DeleteMapping("/admin/{id}")
 	@PreAuthorize("hasAuthority('ADMIN')")
 	public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
@@ -125,27 +130,53 @@ public class ProductsController {
 	}
 
 	@GetMapping("/category/{categoryId}")
-	public ResponseEntity<List<Products>> getProductsByCategory(@PathVariable Long categoryId) {
-	    List<Products> products = productService.getProductsByCategory(categoryId);
-	    return new ResponseEntity<>(products, HttpStatus.OK);
-	}
+	public ResponseEntity<List<ProductsDTO>> getProductsByCategory(@PathVariable Long categoryId) {
+    List<Products> products = productService.getProductsByCategory(categoryId);
+    List<ProductsDTO> dtoList = products.stream().map(this::toProductsDTO).toList();
+    return new ResponseEntity<>(dtoList, HttpStatus.OK);
+}
 
 	@GetMapping("/available")
-	public ResponseEntity<List<Products>> getAvailableProducts() {
-	    List<Products> products = productService.getAvailableProducts();
-	    return new ResponseEntity<>(products, HttpStatus.OK);
-	}
+	public ResponseEntity<List<ProductsDTO>> getAvailableProducts() {
+    List<Products> products = productService.getAvailableProducts();
+    List<ProductsDTO> dtoList = products.stream().map(this::toProductsDTO).toList();
+    return new ResponseEntity<>(dtoList, HttpStatus.OK);
+}
 
 	@GetMapping("/price-range")
-	public ResponseEntity<List<Products>> getProductsByPriceRange(@RequestParam double minPrice, @RequestParam double maxPrice) {
-	    List<Products> products = productService.getProductsByPriceRange(minPrice, maxPrice);
-	    return new ResponseEntity<>(products, HttpStatus.OK);
-	}
+	public ResponseEntity<List<ProductsDTO>> getProductsByPriceRange(@RequestParam double minPrice, @RequestParam double maxPrice) {
+    List<Products> products = productService.getProductsByPriceRange(minPrice, maxPrice);
+    List<ProductsDTO> dtoList = products.stream().map(this::toProductsDTO).toList();
+    return new ResponseEntity<>(dtoList, HttpStatus.OK);
+}
 
 	@GetMapping("/top-rated")
-	public ResponseEntity<List<Products>> getTopRatedProducts() {
-	    List<Products> products = productService.getTopRatedProducts();
-	    return new ResponseEntity<>(products, HttpStatus.OK);
-	}
+	public ResponseEntity<List<ProductsDTO>> getTopRatedProducts() {
+    List<Products> products = productService.getTopRatedProducts();
+    List<ProductsDTO> dtoList = products.stream().map(this::toProductsDTO).toList();
+    return new ResponseEntity<>(dtoList, HttpStatus.OK);
+}
 
+	// DTO conversion helpers
+	private ProductsDTO toProductsDTO(Products product) {
+    ProductsDTO dto = new ProductsDTO();
+    dto.setId(product.getId());
+    dto.setName(product.getName());
+    dto.setDescription(product.getDescription());
+    dto.setPrice(product.getPrice());
+    dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
+    // Add other fields as needed
+    return dto;
+}
+
+	private Products toProductsEntity(ProductsDTO dto) {
+    Products product = new Products();
+    product.setId(dto.getId());
+    product.setName(dto.getName());
+    product.setDescription(dto.getDescription());
+    product.setPrice(dto.getPrice());
+    // Set category if needed (fetch from repository)
+    // Add other fields as needed
+    return product;
+}
 }
