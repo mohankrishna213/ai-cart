@@ -1,6 +1,7 @@
 package org.techm.samples.service.products;
  
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
  
@@ -26,6 +27,11 @@ public class ProductServiceImpl implements ProductService {
 	public Products getProductById(Long id) {
 		Products product=productRepo.findById(id).orElse(null);
 		return product;
+	}
+ 
+	@Override
+	public Optional<Products> getProductByIdOptional(Long id) {
+	    return productRepo.findById(id);
 	}
  
 	@Override

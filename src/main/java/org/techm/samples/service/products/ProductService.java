@@ -1,6 +1,7 @@
 package org.techm.samples.service.products;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ public interface ProductService {
 	Products addProduct(Products product);
 	Products updateProduct(Products product,Long id);
 	Products getProductById(Long id);
+	Optional<Products> getProductByIdOptional(Long id);
 	
 	List<Products> getAllProducts();
 	Page<Products> getAllProducts(Pageable pageable);

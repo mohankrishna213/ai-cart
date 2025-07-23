@@ -1,6 +1,8 @@
 package org.techm.samples.controller.api;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,14 +20,29 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.techm.samples.dto.WishlistItemsDTO;
 import org.techm.samples.entity.Products;
+import org.techm.samples.entity.Wishlist_items;
+import org.techm.samples.entity.User;
+import org.techm.samples.repository.UserInfoRepository;
+import org.techm.samples.repository.WishlistItemsRepository;
 import org.techm.samples.service.products.ProductService;
+import org.techm.samples.service.products.WishlistService;
 
 @Controller
 @RequestMapping("/api/products")
 public class ProductsController {
 	@Autowired
     private ProductService productService;
+	
+	@Autowired
+	private WishlistService wishlistService;
+	
+	@Autowired
+	private WishlistItemsRepository wishlistItemsRepository;
+	
+	@Autowired
+	private UserInfoRepository userInfoRepository;
 	
 	@GetMapping
     public ResponseEntity<Page<Products>> getAllProducts(@RequestParam(defaultValue = "0") int page,
@@ -74,6 +91,37 @@ public class ProductsController {
 	public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
 	    productService.deleteProduct(id);
 	    return ResponseEntity.noContent().build();
+	}
+	
+	@PostMapping("/wishlist/add/{productId}")
+	@PreAuthorize("hasAuthority('CUSTOMER')")
+	public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId, Principal principal) {
+	    Optional<User> userOpt = userInfoRepository.findByUsername(principal.getName());
+	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
+	    if (userOpt.isEmpty() || productOpt.isEmpty()) {
+	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	    }
+	    Wishlist_items item = wishlistService.addToWishlist(userOpt.get(), productOpt.get());
+	    WishlistItemsDTO dto = new WishlistItemsDTO();
+	    dto.setId(item.getId());
+	    dto.setUserId(item.getUser().getId());
+	    dto.setProductId(item.getProduct().getId());
+	    dto.setProductName(item.getProduct().getName());
+	    // If product has image field, set it here
+	    // dto.setProductImage(item.getProduct().getImage());
+	    return new ResponseEntity<>(dto, HttpStatus.CREATED);
+	}
+
+	@DeleteMapping("/wishlist/remove/{productId}")
+	@PreAuthorize("hasAuthority('CUSTOMER')")
+	public ResponseEntity<?> removeProductFromWishlist(@PathVariable Long productId, Principal principal) {
+	    Optional<User> userOpt = userInfoRepository.findByUsername(principal.getName());
+	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
+	    if (userOpt.isEmpty() || productOpt.isEmpty()) {
+	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	    }
+	    wishlistService.removeFromWishlist(userOpt.get(), productOpt.get());
+	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 
 }
