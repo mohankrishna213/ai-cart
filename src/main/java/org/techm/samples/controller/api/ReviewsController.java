@@ -15,6 +15,8 @@ import org.techm.samples.repository.ProductsRepository;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -40,8 +42,10 @@ public class ReviewsController {
     // Create a review by customer
     @PostMapping("/product/{productId}")
     @PreAuthorize("hasAuthority('CUSTOMER')")
-    public ResponseEntity<?> createReview(@PathVariable Long productId, @RequestBody Reviews review, Principal principal) {
-        Optional<User> userOpt = userInfoRepository.findByUsername(principal.getName());
+    public ResponseEntity<?> createReview(@PathVariable Long productId, @RequestBody Reviews review) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        Optional<User> userOpt = userInfoRepository.findByEmail(email);
         Optional<Products> productOpt = productsRepository.findById(productId);
         if (userOpt.isEmpty() || productOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
