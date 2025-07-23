@@ -124,4 +124,28 @@ public class ProductsController {
 	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 
+	@GetMapping("/category/{categoryId}")
+	public ResponseEntity<List<Products>> getProductsByCategory(@PathVariable Long categoryId) {
+	    List<Products> products = productService.getProductsByCategory(categoryId);
+	    return new ResponseEntity<>(products, HttpStatus.OK);
+	}
+
+	@GetMapping("/available")
+	public ResponseEntity<List<Products>> getAvailableProducts() {
+	    List<Products> products = productService.getAvailableProducts();
+	    return new ResponseEntity<>(products, HttpStatus.OK);
+	}
+
+	@GetMapping("/price-range")
+	public ResponseEntity<List<Products>> getProductsByPriceRange(@RequestParam double minPrice, @RequestParam double maxPrice) {
+	    List<Products> products = productService.getProductsByPriceRange(minPrice, maxPrice);
+	    return new ResponseEntity<>(products, HttpStatus.OK);
+	}
+
+	@GetMapping("/top-rated")
+	public ResponseEntity<List<Products>> getTopRatedProducts() {
+	    List<Products> products = productService.getTopRatedProducts();
+	    return new ResponseEntity<>(products, HttpStatus.OK);
+	}
+
 }
