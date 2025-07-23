@@ -2,6 +2,8 @@ package org.techm.samples.entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,10 +21,12 @@ public class Reviews {
 	private Long id;
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "product_id")
+	@JsonBackReference
 	private Products product;
 	
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "user_id")
+	@JsonBackReference
 	private User user;
 	
 	private String title;

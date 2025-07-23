@@ -1,13 +1,16 @@
 package org.techm.samples.service.products;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.techm.samples.entity.Wishlist_items;
-import org.techm.samples.entity.User;
-import org.techm.samples.entity.Products;
-import org.techm.samples.repository.WishlistItemsRepository;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.techm.samples.entity.Products;
+import org.techm.samples.entity.User;
+import org.techm.samples.entity.Wishlist_items;
+import org.techm.samples.repository.WishlistItemsRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class WishlistService {
@@ -22,7 +25,8 @@ public class WishlistService {
         Wishlist_items item = new Wishlist_items(user, product);
         return wishlistItemsRepository.save(item);
     }
-
+    
+    @Transactional
     public void removeFromWishlist(User user, Products product) {
         wishlistItemsRepository.deleteByUserAndProduct(user, product);
     }

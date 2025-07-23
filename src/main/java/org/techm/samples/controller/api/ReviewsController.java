@@ -81,7 +81,9 @@ public class ReviewsController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         Reviews review = reviewOpt.get();
-        Optional<User> userOpt = userInfoRepository.findByUsername(principal.getName());
+        Optional<User> userOpt = userInfoRepository.findByEmail(principal.getName());
+        System.out.println("Principal name: " + principal.getName());
+
         if (userOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }

@@ -96,7 +96,7 @@ public class ProductsController {
 	@PostMapping("/wishlist/add/{productId}")
 	@PreAuthorize("hasAuthority('CUSTOMER')")
 	public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId, Principal principal) {
-	    Optional<User> userOpt = userInfoRepository.findByUsername(principal.getName());
+	    Optional<User> userOpt = userInfoRepository.findByEmail(principal.getName());
 	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
 	    if (userOpt.isEmpty() || productOpt.isEmpty()) {
 	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -115,7 +115,7 @@ public class ProductsController {
 	@DeleteMapping("/wishlist/remove/{productId}")
 	@PreAuthorize("hasAuthority('CUSTOMER')")
 	public ResponseEntity<?> removeProductFromWishlist(@PathVariable Long productId, Principal principal) {
-	    Optional<User> userOpt = userInfoRepository.findByUsername(principal.getName());
+	    Optional<User> userOpt = userInfoRepository.findByEmail(principal.getName());
 	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
 	    if (userOpt.isEmpty() || productOpt.isEmpty()) {
 	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
