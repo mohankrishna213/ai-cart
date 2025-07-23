@@ -20,11 +20,38 @@
             <p th:unless="${product.available}">❌ Out of Stock</p>
             <a th:href="@{'/products/view/' + ${product.id}}">View Details</a>
 
+            <!-- Wishlist button: only for logged-in users who are not admins -->
+            <div th:if="${isLoggedIn} and !${isAdmin}">
+                <form th:action="@{'/wishlist/add/' + ${product.id}}" method="post">
+                    <button type="submit">Add to Wishlist</button>
+                </form>
+            </div>
+
+            <!-- Admin controls -->
             <div th:if="${isAdmin}">
                 <a th:href="@{'/products/edit/' + ${product.id}}">Edit</a>
                 <a th:href="@{'/products/delete/' + ${product.id}}">Delete</a>
             </div>
         </li>
     </ul>
+
+    <!-- Pagination controls -->
+    <div th:if="${totalPages > 1}">
+        <nav>
+            <ul style="list-style:none; display:flex; gap:8px;">
+                <li th:if="${currentPage > 0}">
+                    <a th:href="@{'/products?page=' + (${currentPage} - 1)}">&laquo; Prev</a>
+                </li>
+                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <a th:href="@{'/products?page=' + ${i}}"
+                       th:text="${i + 1}"
+                       th:classappend="${i == currentPage} ? 'active' : ''"></a>
+                </li>
+                <li th:if="${currentPage < totalPages - 1}">
+                    <a th:href="@{'/products?page=' + (${currentPage} + 1)}">Next &raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 </body>
 </html>

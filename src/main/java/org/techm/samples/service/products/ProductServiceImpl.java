@@ -1,6 +1,8 @@
 package org.techm.samples.service.products;
  
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
  
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,11 @@ public class ProductServiceImpl implements ProductService {
 	public List<Products> getAllProducts() {
 		List<Products> products=productRepo.findAll();
 		return products;
+	}
+ 
+	@Override
+	public Page<Products> getAllProducts(Pageable pageable) {
+		return productRepo.findAll(pageable);
 	}
  
 	@Override

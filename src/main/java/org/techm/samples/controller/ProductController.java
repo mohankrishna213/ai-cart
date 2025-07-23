@@ -9,6 +9,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import org.techm.samples.entity.Products;
 import org.techm.samples.service.products.ProductService;
 
@@ -20,19 +24,38 @@ public class ProductController {
     private ProductService productService;
 
     /**
-     * Home page for all authenticated users.
-     * Admins see create/edit/delete options.
+     * Home page for all users (guests, customers, admins) with pagination.
+     * Admins see create/edit/delete options. Guests cannot add to wishlist.
      */
-    @GetMapping("/")
-    public String viewAllProducts(Model model, Authentication authentication) {
-        List<Products> products = productService.getAllProducts();
-        model.addAttribute("products", products);
-
+    @GetMapping({"/", "", "/list"})
+    public String viewAllProducts(
+            Model model,
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Products> productPage = productService.getAllProducts(pageable);
+        model.addAttribute("productPage", productPage);
+        model.addAttribute("products", productPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productPage.getTotalPages());
         boolean isAdmin = authentication != null &&
-                          authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"));
+                authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"));
+        boolean isCustomer = authentication != null &&
+                authentication.getAuthorities().contains(new SimpleGrantedAuthority("CUSTOMER"));
+        boolean isLoggedIn = authentication != null && authentication.isAuthenticated();
         model.addAttribute("isAdmin", isAdmin);
-
+        model.addAttribute("isCustomer", isCustomer);
+        model.addAttribute("isLoggedIn", isLoggedIn);
         return "product-list";
+    }
+
+    /**
+     * Map root '/' to product list for all users (guests, customers, admins).
+     */
+    @GetMapping("/../")
+    public String homeRedirect(Model model, Authentication authentication, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        return viewAllProducts(model, authentication, page, size);
     }
 
     /**
