@@ -69,7 +69,9 @@ public class SecurityConfig {
                     "/products/admin/{id}/edit",
                     "/products/admin/{id}",
                     "/products/admin/{id}/delete",
-                    "/api/products/admin/**"
+                    "/api/products/admin/**",
+                    "/api/categories/admin",
+                    "/api/categories/admin/{id}"
                 ).hasAuthority("ADMIN")
 
                 // Customer-only endpoints
