@@ -25,6 +25,7 @@ import org.techm.samples.dto.WishlistItemsDTO;
 import org.techm.samples.entity.Products;
 import org.techm.samples.entity.Wishlist_items;
 import org.techm.samples.entity.User;
+import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.repository.UserInfoRepository;
 import org.techm.samples.repository.WishlistItemsRepository;
 import org.techm.samples.service.products.ProductService;
@@ -70,7 +71,7 @@ public class ProductsController {
     public ResponseEntity<ProductsDTO> getProductById(@PathVariable Long id) {
     Products product = productService.getProductById(id);
     if (product == null) {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        throw new ResourceNotFoundException("Product not found with id: " + id);
     }
     return new ResponseEntity<>(toProductsDTO(product), HttpStatus.OK);
 }
@@ -103,8 +104,11 @@ public class ProductsController {
 	public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId, Principal principal) {
 	    Optional<User> userOpt = userInfoRepository.findByEmail(principal.getName());
 	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
-	    if (userOpt.isEmpty() || productOpt.isEmpty()) {
-	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	    if (userOpt.isEmpty()) {
+	        throw new ResourceNotFoundException("User not found: " + principal.getName());
+	    }
+	    if (productOpt.isEmpty()) {
+	        throw new ResourceNotFoundException("Product not found with id: " + productId);
 	    }
 	    Wishlist_items item = wishlistService.addToWishlist(userOpt.get(), productOpt.get());
 	    WishlistItemsDTO dto = new WishlistItemsDTO();
@@ -122,8 +126,11 @@ public class ProductsController {
 	public ResponseEntity<?> removeProductFromWishlist(@PathVariable Long productId, Principal principal) {
 	    Optional<User> userOpt = userInfoRepository.findByEmail(principal.getName());
 	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
-	    if (userOpt.isEmpty() || productOpt.isEmpty()) {
-	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	    if (userOpt.isEmpty()) {
+	        throw new ResourceNotFoundException("User not found: " + principal.getName());
+	    }
+	    if (productOpt.isEmpty()) {
+	        throw new ResourceNotFoundException("Product not found with id: " + productId);
 	    }
 	    wishlistService.removeFromWishlist(userOpt.get(), productOpt.get());
 	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);

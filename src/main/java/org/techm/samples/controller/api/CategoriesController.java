@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.techm.samples.entity.Categories;
+import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.service.categories.CategoriesService;
 
 @Controller
@@ -39,7 +40,7 @@ public class CategoriesController {
     public ResponseEntity<Categories> getCategoryById(@PathVariable Long id) {
         Categories category = categoriesService.getCategoryById(id);
         if (category == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException("Category not found with id: " + id);
         }
         return new ResponseEntity<>(category, HttpStatus.OK);
     }
@@ -55,12 +56,19 @@ public class CategoriesController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Categories> updateCategory(@PathVariable Long id, @RequestBody Categories category) {
         Categories updated = categoriesService.updateCategory(category, id);
+        if (updated == null) {
+            throw new ResourceNotFoundException("Category not found with id: " + id);
+        }
         return new ResponseEntity<>(updated, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/admin/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        Categories category = categoriesService.getCategoryById(id);
+        if (category == null) {
+            throw new ResourceNotFoundException("Category not found with id: " + id);
+        }
         categoriesService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }

@@ -12,6 +12,7 @@ import org.techm.samples.service.reviews.ReviewsService;
 import org.techm.samples.repository.UserInfoRepository;
 import org.techm.samples.repository.ProductsRepository;
 import org.techm.samples.dto.ReviewsDTO;
+import org.techm.samples.exception.ResourceNotFoundException;
 
 import java.security.Principal;
 import java.util.List;
@@ -31,13 +32,14 @@ public class ReviewsController {
 
     // Get all reviews for a product
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<Reviews>> getReviewsByProduct(@PathVariable Long productId) {
+    public ResponseEntity<List<ReviewsDTO>> getReviewsByProduct(@PathVariable Long productId) {
         Optional<Products> productOpt = productsRepository.findById(productId);
         if (productOpt.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException("Product not found with id: " + productId);
         }
         List<Reviews> reviews = reviewsService.getReviewsByProduct(productOpt.get());
-        return new ResponseEntity<>(reviews, HttpStatus.OK);
+        List<ReviewsDTO> dtoList = reviews.stream().map(this::toReviewsDTO).toList();
+        return new ResponseEntity<>(dtoList, HttpStatus.OK);
     }
 
     // Create a review by customer
@@ -48,8 +50,11 @@ public class ReviewsController {
         String email = authentication.getName();
         Optional<User> userOpt = userInfoRepository.findByEmail(email);
         Optional<Products> productOpt = productsRepository.findById(productId);
-        if (userOpt.isEmpty() || productOpt.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if (userOpt.isEmpty()) {
+            throw new ResourceNotFoundException("User not found: " + email);
+        }
+        if (productOpt.isEmpty()) {
+            throw new ResourceNotFoundException("Product not found with id: " + productId);
         }
         Reviews review = new Reviews();
         review.setUser(userOpt.get());
@@ -59,13 +64,7 @@ public class ReviewsController {
         review.setContent(reviewDTO.getContent());
         try {
             Reviews saved = reviewsService.addReview(review);
-            ReviewsDTO responseDTO = new ReviewsDTO();
-            responseDTO.setId(saved.getId());
-            responseDTO.setRating(saved.getRating());
-            responseDTO.setTitle(saved.getTitle());
-            responseDTO.setContent(saved.getContent());
-            responseDTO.setUserId(saved.getUser().getId());
-            responseDTO.setProductId(saved.getProduct().getId());
+            ReviewsDTO responseDTO = toReviewsDTO(saved);
             return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
         } catch (IllegalStateException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -78,12 +77,10 @@ public class ReviewsController {
     public ResponseEntity<?> deleteReview(@PathVariable Long reviewId, Principal principal) {
         Optional<Reviews> reviewOpt = reviewsService.getReviewByIdEntity(reviewId);
         if (reviewOpt.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException("Review not found with id: " + reviewId);
         }
         Reviews review = reviewOpt.get();
         Optional<User> userOpt = userInfoRepository.findByEmail(principal.getName());
-        System.out.println("Principal name: " + principal.getName());
-
         if (userOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
@@ -95,5 +92,16 @@ public class ReviewsController {
         } else {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+    }
+
+    private ReviewsDTO toReviewsDTO(Reviews review) {
+        ReviewsDTO dto = new ReviewsDTO();
+        dto.setId(review.getId());
+        dto.setRating(review.getRating());
+        dto.setTitle(review.getTitle());
+        dto.setContent(review.getContent());
+        dto.setUserId(review.getUser().getId());
+        dto.setProductId(review.getProduct().getId());
+        return dto;
     }
 }
