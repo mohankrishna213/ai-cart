@@ -11,6 +11,7 @@ import org.techm.samples.entity.User;
 import org.techm.samples.service.reviews.ReviewsService;
 import org.techm.samples.repository.UserInfoRepository;
 import org.techm.samples.repository.ProductsRepository;
+import org.techm.samples.dto.ReviewsDTO;
 
 import java.security.Principal;
 import java.util.List;
@@ -42,7 +43,7 @@ public class ReviewsController {
     // Create a review by customer
     @PostMapping("/product/{productId}")
     @PreAuthorize("hasAuthority('CUSTOMER')")
-    public ResponseEntity<?> createReview(@PathVariable Long productId, @RequestBody Reviews review) {
+    public ResponseEntity<?> createReview(@PathVariable Long productId, @RequestBody ReviewsDTO reviewDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Optional<User> userOpt = userInfoRepository.findByEmail(email);
@@ -50,11 +51,22 @@ public class ReviewsController {
         if (userOpt.isEmpty() || productOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        Reviews review = new Reviews();
         review.setUser(userOpt.get());
         review.setProduct(productOpt.get());
+        review.setRating(reviewDTO.getRating());
+        review.setTitle(reviewDTO.getTitle());
+        review.setContent(reviewDTO.getContent());
         try {
             Reviews saved = reviewsService.addReview(review);
-            return new ResponseEntity<>(saved, HttpStatus.CREATED);
+            ReviewsDTO responseDTO = new ReviewsDTO();
+            responseDTO.setId(saved.getId());
+            responseDTO.setRating(saved.getRating());
+            responseDTO.setTitle(saved.getTitle());
+            responseDTO.setContent(saved.getContent());
+            responseDTO.setUserId(saved.getUser().getId());
+            responseDTO.setProductId(saved.getProduct().getId());
+            return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
         } catch (IllegalStateException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -82,4 +94,4 @@ public class ReviewsController {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
     }
-} 
+}
