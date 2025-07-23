@@ -57,7 +57,9 @@ public class SecurityConfig {
                     "/products/{id}",
                     "/api/products",
                     "/api/products/search",
-                    "/api/products/{id}"
+                    "/api/products/{id}",
+                    "/api/categories"
+
                 ).permitAll()
 
                 // Admin-only endpoints
