@@ -9,8 +9,6 @@ public interface CategoriesService {
 	
 	List<Categories> getAllCategories();
 	
-	
-	
 	List<Categories> getCategoryByName(String name);
 	
 	void deleteCategory(Long id);
