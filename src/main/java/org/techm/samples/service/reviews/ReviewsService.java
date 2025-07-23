@@ -20,4 +20,6 @@ public interface ReviewsService {
 
 	Optional<Reviews> getReviewByProductAndUser(Products product, User user);
 
+	Optional<Reviews> getReviewByIdEntity(Long id);
+
 }

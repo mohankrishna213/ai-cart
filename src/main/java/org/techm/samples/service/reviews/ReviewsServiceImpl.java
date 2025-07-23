@@ -50,4 +50,9 @@ public class ReviewsServiceImpl implements ReviewsService {
         return reviewsRepository.findByProductAndUser(product, user);
     }
 
+	@Override
+	public Optional<Reviews> getReviewByIdEntity(Long id) {
+        return reviewsRepository.findById(id);
+    }
+
 }

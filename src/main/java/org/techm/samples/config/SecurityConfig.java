@@ -58,7 +58,7 @@ public class SecurityConfig {
                     "/api/products",
                     "/api/products/search",
                     "/api/products/{id}",
-                    "/api/categories"
+                    "/api/categories",
 
                 ).permitAll()
 
@@ -76,6 +76,11 @@ public class SecurityConfig {
 
                 // Customer-only endpoints
                 .requestMatchers("/auth/user/**").hasAuthority("CUSTOMER")
+
+                // Review endpoints
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/product/{productId}").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/reviews/product/{productId}").hasAuthority("CUSTOMER")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/reviews/{reviewId}").hasAnyAuthority("ADMIN", "CUSTOMER")
 
                 // All other requests require authentication
                 .anyRequest().authenticated()
