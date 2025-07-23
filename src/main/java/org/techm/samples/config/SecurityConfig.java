@@ -41,21 +41,37 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers(
-                    "/auth/welcome",
                     "/auth/generateToken",
-                    "/auth/register",
                     "/auth/registerPage",
                     "/auth/registerUser",
                     "/auth/loginPage",
                     "/auth/loginUser",
                     "/css/**",
                     "/js/**",
-                    "/images/**"
+                    "/images/**",
+                    "/products",
+                    "/products/",
+                    "/products/list",
+                    "/products/search",
+                    "/products/category/**",
+                    "/products/{id}",
+                    "/api/products",
+                    "/api/products/search",
+                    "/api/products/{id}"
                 ).permitAll()
 
-                // Role-based access
+                // Admin-only endpoints
+                .requestMatchers(
+                    "/products/admin",
+                    "/products/admin/new",
+                    "/products/admin/{id}/edit",
+                    "/products/admin/{id}",
+                    "/products/admin/{id}/delete",
+                    "/api/products/admin/**"
+                ).hasAuthority("ADMIN")
+
+                // Customer-only endpoints
                 .requestMatchers("/auth/user/**").hasAuthority("CUSTOMER")
-                .requestMatchers("/auth/admin/**").hasAuthority("ADMIN")
 
                 // All other requests require authentication
                 .anyRequest().authenticated()

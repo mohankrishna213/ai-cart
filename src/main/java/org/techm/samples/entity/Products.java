@@ -30,7 +30,7 @@ public class Products {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = true)
     @JoinColumn(name = "category_id")
     private Categories category;
     
