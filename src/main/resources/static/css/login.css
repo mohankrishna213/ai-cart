@@ -1,21 +1,21 @@
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
+	background-image: url(https://deq64r0ss2hgl.cloudfront.net/images/corporate/pagebackimg_techmbrandstore.jpg) !important;
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+	min-height : 90vh; 
+}
+.col-lg-offset-4 {
+	
 }
 
 /* Container for form and heading */
 .form-container {
-  background-color: #ffffff;
-  padding: 30px 40px;
+  float:left;
+  background:#ffffff; 
+  padding:15px 14px; 
+  box-shadow:0 3px 5px rgba(0,0,0,0.5);
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
+
   text-align: center;
 }
 

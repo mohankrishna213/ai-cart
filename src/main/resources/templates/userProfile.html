@@ -1,10 +1,75 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>User Profile</title>
+    <meta charset="UTF-8">
+    <title>Tech Mahindra Store</title>
+    <link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
-Welcome to user profile  
+    <header>
+        <div class="nav-container">
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <div class="search-bar">
+                <form th:action="@{/getproductbyname}" method="get">
+                    <input type="text" name="name" placeholder="Search" />
+                    <button type="submit">🔍</button>
+                </form>
+            </div>
+            <nav>
+                <ul>
+                    <li th:each="category : ${categories}">
+                        <a th:text="${category}" href="#"></a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="top-links">
+                <a href="#" th:href="@{/wishlist}">Wishlist</a>
+                <div class="account-dropdown">
+                    <button>Hello, friend! ⌄</button>
+                    <div class="dropdown-content">
+                        <form th:action="@{/logout}" method="post">
+                            <button type="submit">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Carousel Section -->
+    <section class="carousel">
+        <div class="carousel-slide">
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/opt/flashgallary/large/Banner-3_2090804870.jpg.webp?v=8787" alt="Slide 1" />
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/opt/flashgallary/large/Banner-1_7218174766.jpg.webp?v=8787" alt="Slide 2" />
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/opt/flashgallary/large/Banner-2_2111601589.jpg.webp?v=8787" alt="Slide 3" />
+        </div>
+    </section>
+
+    <main class="products-section">
+    <h2>Our Products</h2>
+    <div class="products-grid">
+        <div class="product-card" th:each="product : ${products}">
+            <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+            <h3 th:text="${product.name}">Product Name</h3>
+            <p th:text="'₹ ' + ${product.price}">Price</p>
+        </div>
+    </div>
+
+    <!-- Pagination Controls -->
+<!--     <div class="pagination"> -->
+<!--         <a th:if="${currentPage > 0}" -->
+<!--            th:href="@{'/?page=' + (${currentPage - 1})}" class="page-btn">« Prev</a> -->
+
+<!--         <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}"> -->
+<!--             <a th:href="@{'/?page=' + ${i}}" -->
+<!--                th:text="${i + 1}" -->
+<!--                th:classappend="${i == currentPage} ? 'active' : ''" -->
+<!--                class="page-btn"></a> -->
+<!--         </span> -->
+
+<!--         <a th:if="${currentPage < totalPages - 1}" -->
+<!--            th:href="@{'/?page=' + (${currentPage + 1})}" class="page-btn">Next »</a> -->
+<!--     </div> -->
+</main>
 </body>
 </html>
