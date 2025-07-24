@@ -49,7 +49,7 @@ public class CategoriesServiceImpl implements CategoriesService{
 		Categories updatedCategory = categoryRepo.findById(id).orElse(category);
 		updatedCategory.setName(category.getName());
 		updatedCategory.setDescription(category.getDescription());
-		return updatedCategory;
+		return categoryRepo.save(updatedCategory);
 	}
 	
 

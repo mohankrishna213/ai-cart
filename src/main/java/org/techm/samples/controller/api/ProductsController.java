@@ -172,7 +172,9 @@ public class ProductsController {
     dto.setDescription(product.getDescription());
     dto.setPrice(product.getPrice());
     dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
-    // Add other fields as needed
+    dto.setAvailable(product.isAvailable());
+    dto.setStockQuantity(product.getStockQuantity());
+    dto.setImageUrl(product.getImageUrl());
     return dto;
 }
 
@@ -182,8 +184,10 @@ public class ProductsController {
     product.setName(dto.getName());
     product.setDescription(dto.getDescription());
     product.setPrice(dto.getPrice());
-    // Set category if needed (fetch from repository)
-    // Add other fields as needed
+    product.setStockQuantity(dto.getStockQuantity());
+    product.setImageUrl(dto.getImageUrl());
+    product.setAvailable(dto.isAvailable());
+    
     return product;
 }
 }

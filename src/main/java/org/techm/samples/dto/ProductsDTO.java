@@ -6,6 +6,9 @@ public class ProductsDTO {
     private String description;
     private Double price;
     private Long categoryId;
+    private Integer stockQuantity;
+    private String imageUrl;
+    private boolean available;
     // Add other fields as needed
 
     public Long getId() { return id; }
@@ -19,4 +22,24 @@ public class ProductsDTO {
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     // Add other getters/setters as needed
+	public Integer getStockQuantity() {
+		return stockQuantity;
+	}
+	public void setStockQuantity(Integer stockQuantity) {
+		this.stockQuantity = stockQuantity;
+	}
+	public String getImageUrl() {
+		return imageUrl;
+	}
+	public void setImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl;
+	}
+	public boolean isAvailable() {
+		return available;
+	}
+	public void setAvailable(boolean available) {
+		this.available = available;
+	}
+	
+    
 }
