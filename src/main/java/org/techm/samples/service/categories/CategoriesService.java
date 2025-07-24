@@ -2,6 +2,7 @@ package org.techm.samples.service.categories;
 
 import java.util.List;
 
+import org.techm.samples.dto.ProductsDTO;
 import org.techm.samples.entity.Categories;
 
 public interface CategoriesService {
@@ -16,6 +17,8 @@ public interface CategoriesService {
 	Categories updateCategory(Categories category, Long id);
 
 	Categories getCategoryById(Long id);
+
+	ProductsDTO addProductToCategory(Long categoryId, ProductsDTO dto);
 	
 
 }

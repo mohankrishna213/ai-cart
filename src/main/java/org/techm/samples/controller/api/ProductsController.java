@@ -116,8 +116,7 @@ public class ProductsController {
 	    dto.setUserId(item.getUser().getId());
 	    dto.setProductId(item.getProduct().getId());
 	    dto.setProductName(item.getProduct().getName());
-	    // If product has image field, set it here
-	    // dto.setProductImage(item.getProduct().getImage());
+	    dto.setProductImage(item.getProduct().getImageUrl());
 	    return new ResponseEntity<>(dto, HttpStatus.CREATED);
 	}
 

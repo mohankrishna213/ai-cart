@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.techm.samples.dto.ProductsDTO;
 import org.techm.samples.entity.Categories;
 import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.service.categories.CategoriesService;
@@ -72,4 +73,15 @@ public class CategoriesController {
         categoriesService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @PostMapping("/admin/{categoryId}/add-product")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<ProductsDTO> addProductToCategory(
+            @PathVariable Long categoryId,
+            @RequestBody ProductsDTO productsDTO) {
+
+        ProductsDTO savedProduct = categoriesService.addProductToCategory(categoryId, productsDTO);
+        return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
+    }
+
 }
