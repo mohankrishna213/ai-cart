@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Wishlist</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+    <h1>Your Wishlist</h1>
+    <a th:href="@{/home}">Back to Home</a>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Image</th>
+                <th>Remove</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item : ${wishlistItems}">
+                <td th:text="${item.productName}"></td>
+                <td><img th:src="${item.productImage}" width="80"/></td>
+                <td>
+                    <form th:action="@{'/products/wishlist/remove/' + ${item.productId}}" method="post">
+                        <button type="submit">Remove</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

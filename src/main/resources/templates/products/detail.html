@@ -1,17 +1,48 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Product Detail</title>
-    <link rel="stylesheet" href="/css/styles.css" />
+    <title>Product Details</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}" />
 </head>
 <body>
-    <h1 th:text="${product.name}">Product Name</h1>
-    <p th:text="${product.description}">Description</p>
-    <p>Price: ₹<span th:text="${product.price}">0.00</span></p>
-    <p>Stock: <span th:text="${product.stockQuantity}">0</span></p>
-    <p th:if="${product.available}">✅ Available</p>
-    <p th:unless="${product.available}">❌ Out of Stock</p>
-    <img th:src="${product.imageUrl}" alt="Product Image" style="max-width:300px;" />
-    <a href="/products">Back to Product List</a>
+    <a th:href="@{/home}">Back to Home</a>
+    <h1 th:text="${product.name}"></h1>
+    <img th:src="${product.imageUrl}" width="200"/>
+    <p th:text="${product.description}"></p>
+    <p>Price: <span th:text="${product.price}"></span></p>
+    <p>Stock: <span th:text="${product.stockQuantity}"></span></p>
+    <div th:if="${inWishlist}">
+        <form th:action="@{'/products/wishlist/remove/' + ${product.id}}" method="post">
+            <button type="submit">Remove from Wishlist</button>
+        </form>
+    </div>
+    <div th:unless="${inWishlist}">
+        <form th:action="@{'/products/wishlist/add/' + ${product.id}}" method="post">
+            <button type="submit">Add to Wishlist</button>
+        </form>
+    </div>
+    <h2>Reviews</h2>
+    <div th:if="${#lists.isEmpty(reviews)}">No reviews yet.</div>
+    <ul>
+        <li th:each="review : ${reviews}">
+            <b th:text="${review.title}"></b> - <span th:text="${review.rating}"></span>/5<br/>
+            <span th:text="${review.content}"></span>
+            <form th:action="@{'/api/reviews/' + ${review.id}}" method="post" th:if="${review.userId == #authentication.principal.id}" style="display:inline;">
+                <input type="hidden" name="_method" value="delete" />
+                <button type="submit">Delete Review</button>
+            </form>
+        </li>
+    </ul>
+    <div th:if="${!#lists.isEmpty(reviews) && #lists.contains(reviews.?[userId == #authentication.principal.id], true)}">
+        <p>You have already reviewed this product.</p>
+    </div>
+    <div th:unless="${#lists.contains(reviews.?[userId == #authentication.principal.id], true)}">
+        <form th:action="@{'/api/reviews/product/' + ${product.id}}" method="post">
+            <input type="text" name="title" placeholder="Title" required />
+            <textarea name="content" placeholder="Write your review..." required></textarea>
+            <input type="number" name="rating" min="1" max="5" required />
+            <button type="submit">Submit Review</button>
+        </form>
+    </div>
 </body>
 </html>

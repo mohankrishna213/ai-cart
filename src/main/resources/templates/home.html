@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Home</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+    <header>
+        <div style="float:right;">
+            <div th:if="${#request.remoteUser != null}">
+                <form th:action="@{/logout}" method="post" style="display:inline;">
+                    <button type="submit">Logout</button>
+                </form>
+            </div>
+            <div th:if="${#request.remoteUser == null}">
+                <a th:href="@{/auth/loginPage}"><button>Login</button></a>
+            </div>
+            <a th:href="@{/wishlist}" style="margin-right:20px;">Wishlist</a>
+        </div>
+        <form th:action="@{/products/search}" method="get" style="display:inline;">
+            <input type="text" name="q" placeholder="Search products..." />
+            <button type="submit">Search</button>
+        </form>
+    </header>
+    <h1>Categories</h1>
+    <ul>
+        <li th:each="cat : ${categories}">
+            <a th:href="@{'/category/' + ${cat.id}}" th:text="${cat.name}"></a>
+        </li>
+    </ul>
+    <h2>All Products</h2>
+    <div>
+        <a th:href="@{/products/price-range(minPrice=0,maxPrice=100)}">Price: 0-100</a> |
+        <a th:href="@{/products/price-range(minPrice=100,maxPrice=500)}">Price: 100-500</a> |
+        <a th:href="@{/products/top-rated}">Top Rated</a>
+    </div>
+    <div th:replace="products/list :: productList(${products})"></div>
+</body>
+</html>

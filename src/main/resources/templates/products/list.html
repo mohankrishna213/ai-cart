@@ -18,5 +18,15 @@
             <a th:href="@{'/products/' + ${product.id}}">View Details</a>
         </div>
     </div>
+
+    <div th:fragment="productList(products)">
+        <div th:each="product : ${products}">
+            <a th:href="@{'/product/' + ${product.id}}">
+                <img th:src="${product.imageUrl}" width="100"/>
+                <span th:text="${product.name}"></span>
+            </a>
+            <span>Price: <span th:text="${product.price}"></span></span>
+        </div>
+    </div>
 </body>
 </html>
