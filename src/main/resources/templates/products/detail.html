@@ -1,48 +1,285 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Product Details</title>
-    <link rel="stylesheet" th:href="@{/css/home.css}" />
+    <meta charset="UTF-8">
+    <title th:text="${product.name} + ' | Tech Mahindra Store'">Product Details</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #222;
+        background-color: #fff;
+    }
+    .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #f5f5f5;
+    }
+    .img {
+        width: 150px;
+        margin-bottom: 20px;
+    }
+    nav ul {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    nav ul li {
+        margin: 0 10px;
+    }
+    .top-links {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    .account-dropdown {
+        position: relative;
+    }
+    .account-dropdown button {
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        padding: 10px;
+    }
+    .account-dropdown:hover .dropdown-content {
+        display: block;
+    }
+    .breadcrumb {
+        font-size: 14px;
+        color: #666;
+        margin: 20px 0 20px 20px;
+    }
+    .breadcrumb .link {
+        color: #007BFF;
+        text-decoration: none;
+    }
+    .product-details-container {
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+        margin: 30px 20px 0 20px;
+    }
+    .image-section img {
+        width: 400px;
+        max-width: 100%;
+        border: 1px solid #ddd;
+        padding: 10px;
+        background: #fafafa;
+    }
+    .info-section {
+        max-width: 600px;
+        flex: 1;
+    }
+    .info-section h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+    .stock-info {
+        margin: 10px 0;
+        font-size: 16px;
+    }
+    .price-section {
+        margin-top: 20px;
+    }
+    .total-price {
+        font-size: 24px;
+        font-weight: bold;
+        color: #000;
+    }
+    .add-to-cart {
+        margin-top: 10px;
+        padding: 10px 20px;
+        background-color: #000;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .add-to-cart:hover {
+        background-color: #222;
+    }
+    /* Popup styles */
+    .popup-card {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    .popup-content {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        padding: 30px 30px 20px 30px;
+        min-width: 350px;
+        max-width: 90vw;
+        position: relative;
+    }
+    .popup-close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 22px;
+        color: #888;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+    .popup-content h3 {
+        margin-top: 0;
+        font-size: 22px;
+        color: #333;
+    }
+    .popup-content form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .popup-content input, .popup-content textarea {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 15px;
+    }
+    .popup-content button[type="submit"] {
+        background: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .popup-content button[type="submit"]:hover {
+        background: #0056b3;
+    }
+    .slider-rating-container {
+        display: flex;
+        align-items: center;
+        margin: 10px 0 20px 0;
+    }
+    input[type="range"] {
+        width: 200px;
+        accent-color: #e25555;
+        height: 4px;
+        border-radius: 2px;
+    }
+    #lovePointer {
+        transition: margin-left 0.2s;
+    }
+    </style>
 </head>
 <body>
-    <a th:href="@{/home}">Back to Home</a>
-    <h1 th:text="${product.name}"></h1>
-    <img th:src="${product.imageUrl}" width="200"/>
-    <p th:text="${product.description}"></p>
-    <p>Price: <span th:text="${product.price}"></span></p>
-    <p>Stock: <span th:text="${product.stockQuantity}"></span></p>
-    <div th:if="${inWishlist}">
-        <form th:action="@{'/products/wishlist/remove/' + ${product.id}}" method="post">
-            <button type="submit">Remove from Wishlist</button>
-        </form>
+    <header>
+        <div class="nav-container">
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <nav>
+                <ul>
+                    <li th:each="category : ${categories}">
+                        <a th:text="${category.name}" th:href="@{'/category/' + ${category.id}}"></a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="top-links">
+                <a th:href="@{/wishlist}">Wishlist</a>
+                <div th:if="${remoteUser == null}">
+                    <a th:href="@{/auth/loginPage}"><button>Login</button></a>
+                </div>
+                <div class="account-dropdown" th:if="${remoteUser != null}">
+                    <button>Hello, friend ⌄</button>
+                    <div class="dropdown-content">
+                        <form th:action="@{/logout}" method="post">
+                            <button type="submit">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="breadcrumb">
+        <a th:href="@{/home}" class="link">Home</a> &gt; <a th:href="@{'/category/' + ${product.categoryId}}" class="link">Category</a> &gt; <span th:text="${product.name}"></span>
     </div>
-    <div th:unless="${inWishlist}">
-        <form th:action="@{'/products/wishlist/add/' + ${product.id}}" method="post">
-            <button type="submit">Add to Wishlist</button>
-        </form>
+    <div class="product-details-container">
+        <div class="image-section">
+            <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+        </div>
+        <div class="info-section">
+            <h1 th:text="${product.name}">Product Name</h1>
+            <p th:text="${product.description}">Product description goes here.</p>
+            <p th:text="'Stock: ' + ${product.stockQuantity}"></p>
+            <p th:text="'Available: ' + (${product.available} ? 'Yes' : 'No')"></p>
+            <div class="price-section">
+                <p class="total-price" th:text="'₹ ' + ${product.price}">₹ 0.00</p>
+                <form th:action="@{'/products/wishlist/add/' + ${product.id}}" method="post" id="addToWishlistForm">
+                    <button type="submit" class="add-to-cart" id="addToWishlistBtn">🛒 Add To WishList</button>
+                </form>
+            </div>
+        </div>
     </div>
-    <h2>Reviews</h2>
-    <div th:if="${#lists.isEmpty(reviews)}">No reviews yet.</div>
-    <ul>
-        <li th:each="review : ${reviews}">
-            <b th:text="${review.title}"></b> - <span th:text="${review.rating}"></span>/5<br/>
-            <span th:text="${review.content}"></span>
-            <form th:action="@{'/api/reviews/' + ${review.id}}" method="post" th:if="${review.userId == #authentication.principal.id}" style="display:inline;">
-                <input type="hidden" name="_method" value="delete" />
-                <button type="submit">Delete Review</button>
+    <!-- Popup for review submission -->
+    <div class="popup-card" id="reviewPopup" style="display:none;">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closePopup()">&times;</button>
+            <h3>Write a Review</h3>
+            <form th:action="@{'/api/reviews/product/' + ${product.id}}" method="post" id="reviewForm">
+                <input type="text" name="title" placeholder="Title" required />
+                <textarea name="content" placeholder="Write your review..." required></textarea>                <!-- Rating input: number with 0.5 intervals -->
+                <div style="margin: 10px 0 20px 0;">
+                    <label for="ratingInput" style="margin-right:10px; font-weight:500;">Rating:</label>
+                    <input type="number" name="rating" id="ratingInput" min="0.5" max="5" step="0.5" value="5" style="width:70px; font-size:1.1em;" required />
+                </div>
+                <button type="submit">Submit Review</button>
             </form>
-        </li>
-    </ul>
-    <div th:if="${!#lists.isEmpty(reviews) && #lists.contains(reviews.?[userId == #authentication.principal.id], true)}">
-        <p>You have already reviewed this product.</p>
+        </div>
     </div>
-    <div th:unless="${#lists.contains(reviews.?[userId == #authentication.principal.id], true)}">
-        <form th:action="@{'/api/reviews/product/' + ${product.id}}" method="post">
-            <input type="text" name="title" placeholder="Title" required />
-            <textarea name="content" placeholder="Write your review..." required></textarea>
-            <input type="number" name="rating" min="1" max="5" required />
-            <button type="submit">Submit Review</button>
-        </form>
-    </div>
+    <script>
+    // Show popup after adding to wishlist
+    document.getElementById('addToWishlistForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetch(this.action, {method: 'POST'})
+            .then(res => {
+                if(res.ok) {
+                    document.getElementById('reviewPopup').style.display = 'flex';
+                }
+            });
+    });
+    function closePopup() {
+        document.getElementById('reviewPopup').style.display = 'none';
+    }
+    // Close popup after review submit
+    document.getElementById('reviewForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch(this.action, {method: 'POST', body: formData})
+            .then(res => {
+                if(res.ok) {
+                    closePopup();
+                    location.reload();
+                }
+            });
+    });
+    function updateLovePointer(val) {
+        document.getElementById('ratingValue').textContent = val;
+        let love = document.getElementById('lovePointer');
+        love.style.marginLeft = (val * 30) + 'px';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        updateLovePointer(document.getElementById('ratingSlider').value);
+    });
+    </script>
 </body>
 </html>

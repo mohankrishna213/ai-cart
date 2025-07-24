@@ -3,27 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <title>Register</title>
-  <link rel="stylesheet" th:href="@{/css/register.css}">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    .container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: url(https://deq64r0ss2hgl.cloudfront.net/images/corporate/pagebackimg_techmbrandstore.jpg) !important;
+      background-color: white;
+    }
+    .register-box {
+      background: white;
+      width: 400px;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      position: relative;
+      text-align: center;
+    }
+    .register-box img {
+      width: 150px;
+      margin-bottom: 20px;
+    }
+    form label {
+      text-align: left;
+      display: block;
+      color: #444;
+      font-weight: bold;
+    }
+    .register-box input[type="text"],
+    .register-box input[type="email"],
+    .register-box input[type="password"] {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .register-box input[type="submit"] {
+      width: 95%;
+      padding: 12px;
+      background-color: black;
+      color: white;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .register-box input[type="submit"]:hover {
+      background-color: #333;
+    }
+    .login-btn {
+      background-color: #e0e0e0;
+      color: black;
+      margin-top: 10px;
+      width: 95%;
+      padding: 12px;
+      border: none;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .disclaimer {
+      font-size: 12px;
+      color: #444;
+      margin-top: 20px;
+      text-align: left;
+    }
+  </style>
 </head>
 <body>
-  <div class="form-container">
-    <h3>Register</h3>
-    <form th:action="@{/auth/registerUser}" method="post" th:object="${user}">
-      <label for="username">Username:</label>
-      <input type="text" id="username" th:field="*{username}" required placeholder="Enter your username">
+  <div class="container">
+    <div class="register-box">
+      <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" alt="Tech Mahindra Logo">
+      <form th:action="@{/auth/registerUser}" method="post" th:object="${user}">
+        <label for="username">Username:</label>
+        <input type="text" id="username" th:field="*{username}" required placeholder="Enter your username">
 
-      <label for="email">Email:</label>
-      <input type="email" id="email" th:field="*{email}" required placeholder="Enter your email">
+        <label for="email">Email:</label>
+        <input type="email" id="email" th:field="*{email}" required placeholder="Enter your email">
 
-      <label for="password">Password:</label>
-      <input type="password" id="password" th:field="*{password}" required placeholder="Enter your password">
+        <label for="password">Password:</label>
+        <input type="password" id="password" th:field="*{password}" required placeholder="Enter your password">
 
-      <label for="confirmPassword">Confirm Password:</label>
-      <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+        <label for="confirmPassword">Confirm Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
 
-      <input type="submit" value="Register">
-    </form>
-    <p>Already have an account? <a th:href="@{/auth/loginPage}">Login here</a></p>
+        <input type="submit" value="Register">
+      </form>
+      <form th:action="@{/auth/loginPage}" method="get">
+        <button type="submit" class="login-btn">Already have an account? Login here</button>
+      </form>
+      <div class="disclaimer">
+        <strong>Disclaimer</strong><br>
+        This Product Catalog is part of a capstone academic project developed for learning and demonstration purposes only. All products, brands, images, prices, and descriptions shown here are entirely fictional and do not represent any real commercial offering. This platform is not intended for actual sales, transactions, or marketing, and should not be interpreted as a functioning e-commerce website.
+      </div>
+    </div>
   </div>
 </body>
 </html>

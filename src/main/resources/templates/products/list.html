@@ -1,32 +1,90 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Product List</title>
-    <link rel="stylesheet" href="/css/styles.css" />
+    <title>All Products</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #444;
+    }
+    .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #f5f5f5;
+    }
+    .img {
+        width: 150px;
+        margin-bottom: 20px;
+    }
+    nav ul {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    nav ul li {
+        margin: 0 10px;
+        position: relative;
+    }
+    nav ul li.active a {
+        border-bottom: 2px solid #333;
+        color: #333;
+        font-weight: bold;
+    }
+    .products-section {
+        padding: 20px;
+        background-color: #fafafa;
+    }
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    .product-card {
+        border: 1px solid #ddd;
+        padding: 15px;
+        text-align: center;
+        background-color: white;
+    }
+    .product-card img {
+        width: 100%;
+        height: auto;
+    }
+    </style>
 </head>
 <body>
-    <h1>All Products</h1>
-    <form th:action="@{/products/search}" method="get">
-        <input type="text" name="q" placeholder="Search products..." />
-        <button type="submit">Search</button>
-    </form>
-    <div class="product-grid">
-        <div th:each="product : ${products}" class="product-card">
-            <h2 th:text="${product.name}">Product Name</h2>
-            <p th:text="${product.description}">Description</p>
-            <p>₹<span th:text="${product.price}">0.00</span></p>
-            <a th:href="@{'/products/' + ${product.id}}">View Details</a>
+    <header>
+        <div class="nav-container">
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <nav>
+                <ul>
+                    <li th:each="cat : ${categories}" th:classappend="${cat.id} == ${categoryId} ? 'active'">
+                        <a th:text="${cat.name}" th:href="@{'/category/' + ${cat.id}}"></a>
+                    </li>
+                </ul>
+            </nav>
+            <a th:href="@{/wishlist}">Wishlist</a>
         </div>
-    </div>
-
-    <div th:fragment="productList(products)">
-        <div th:each="product : ${products}">
-            <a th:href="@{'/product/' + ${product.id}}">
-                <img th:src="${product.imageUrl}" width="100"/>
-                <span th:text="${product.name}"></span>
-            </a>
-            <span>Price: <span th:text="${product.price}"></span></span>
+    </header>
+    <main class="products-section">
+        <h2>All Products</h2>
+        <form th:action="@{/products/search}" method="get">
+            <input type="text" name="q" placeholder="Search products..." />
+            <button type="submit">Search</button>
+        </form>
+        <div class="products-grid">
+            <div class="product-card" th:each="product : ${products}">
+                <a th:href="@{'/product/' + ${product.id}}">
+                    <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+                    <h3 th:text="${product.name}">Product Name</h3>
+                    <p th:text="'₹ ' + ${product.price}">Price</p>
+                </a>
+            </div>
         </div>
-    </div>
+    </main>
 </body>
 </html>
