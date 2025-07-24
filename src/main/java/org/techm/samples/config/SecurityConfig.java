@@ -62,7 +62,11 @@ public class SecurityConfig {
                     "/api/products/available",
                     "/api/products/price-range",
                     "/api/products/top-rated",
-                    "/api/categories"
+                    "/api/categories",
+                    "/",
+                    "/home",
+                    "/category/{categoryId}",
+                    "/product/{productId}"
 
                 ).permitAll()
 

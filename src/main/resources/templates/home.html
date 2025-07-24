@@ -1,39 +1,231 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Home</title>
-    <link rel="stylesheet" th:href="@{/css/home.css}" />
+    <meta charset="UTF-8">
+    <title>Tech Mahindra Store</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #444;
+    }
+	a {
+        text-decoration: none;
+        color: #444;
+    }
+    .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #f5f5f5;
+    }
+
+    .logo {
+        font-weight: bold;
+        font-size: 1.5em;
+        color: #333;
+    }
+
+    .img {
+        width: 150px;
+        margin-bottom: 20px;
+    }
+
+    .search-bar input {
+        padding: 5px;
+        width: 200px;
+    }
+
+    nav ul {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    nav ul li {
+        margin: 0 10px;
+    }
+
+    .top-links {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .account-dropdown {
+        position: relative;
+    }
+
+    .account-dropdown button {
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        padding: 10px;
+    }
+
+    .account-dropdown:hover .dropdown-content {
+        display: block;
+    }
+
+    .carousel {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .carousel-slide {
+        display: flex;
+        animation: slide 10s infinite;
+    }
+
+    .carousel-slide img {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+    }
+
+    @keyframes slide {
+        0% { transform: translateX(0%); }
+        33% { transform: translateX(-100%); }
+        66% { transform: translateX(-200%); }
+        100% { transform: translateX(0%); }
+    }
+
+    .products-section {
+        padding: 20px;
+        background-color: #fafafa;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .product-card {
+        border: 1px solid #ddd;
+        padding: 15px;
+        text-align: center;
+        background-color: white;
+    }
+
+    .product-card img {
+        width: 100%;
+        height: auto;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        gap: 8px;
+    }
+
+    .page-btn {
+        padding: 6px 12px;
+        text-decoration: none;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .page-btn.active {
+        background-color: #333;
+        color: white;
+        border-color: #333;
+    }
+    </style>
 </head>
 <body>
+    <!-- Header Section -->
     <header>
-        <div style="float:right;">
-            <div th:if="${#request.remoteUser != null}">
-                <form th:action="@{/logout}" method="post" style="display:inline;">
-                    <button type="submit">Logout</button>
+        <div class="nav-container">
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <div class="search-bar">
+                <form th:action="@{/products/search}" method="get">
+                    <input type="text" name="q" placeholder="Search products..." />
+                    <button type="submit">🔍</button>
                 </form>
             </div>
-            <div th:if="${#request.remoteUser == null}">
-                <a th:href="@{/auth/loginPage}"><button>Login</button></a>
-            </div>
-            <a th:href="@{/wishlist}" style="margin-right:20px;">Wishlist</a>
-        </div>
-        <form th:action="@{/products/search}" method="get" style="display:inline;">
-            <input type="text" name="q" placeholder="Search products..." />
-            <button type="submit">Search</button>
-        </form>
-    </header>
-    <h1>Categories</h1>
-    <ul>
-        <li th:each="cat : ${categories}">
-            <a th:href="@{'/category/' + ${cat.id}}" th:text="${cat.name}"></a>
-        </li>
-    </ul>
-    <h2>All Products</h2>
-    <div>
-        <a th:href="@{/products/price-range(minPrice=0,maxPrice=100)}">Price: 0-100</a> |
-        <a th:href="@{/products/price-range(minPrice=100,maxPrice=500)}">Price: 100-500</a> |
-        <a th:href="@{/products/top-rated}">Top Rated</a>
+            <nav>
+                <ul>
+                    <li th:each="category : ${categories}">
+                        <a th:text="${category.name}" th:href="@{'/category/' + ${category.id}}"></a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="top-links">
+    <a th:href="@{/wishlist}">Wishlist</a>
+
+    <!-- Show login if user not logged in -->
+    <div th:if="${remoteUser == null}">
+        <a th:href="@{/auth/loginPage}">
+            <button>Login</button>
+        </a>
     </div>
-    <div th:replace="products/list :: productList(${products})"></div>
+
+    <!-- Show account dropdown if user is logged in -->
+    <div class="account-dropdown" th:if="${remoteUser != null}">
+        <button>Hello, friend ⌄</button>
+        <div class="dropdown-content">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+        </div>
+    </header>
+
+    <!-- Carousel -->
+    <section class="carousel">
+        <div class="carousel-slide">
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/opt/flashgallary/large/Banner-3_2090804870.jpg.webp?v=8787" alt="Slide 1" />
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/opt/flashgallary/large/Banner-1_7218174766.jpg.webp?v=8787" alt="Slide 2" />
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/opt/flashgallary/large/Banner-2_2111601589.jpg.webp?v=8787" alt="Slide 3" />
+        </div>
+    </section>
+
+    <!-- Products -->
+    <main class="products-section">
+        <h2>Our Products</h2>
+        <div class="products-grid">
+            <div class="product-card" th:each="product : ${products}">
+                <a th:href="@{'/product/' + ${product.id}}">
+	                <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+	                <h3 th:text="${product.name}">Product Name</h3>
+	                <p th:text="'₹ ' + ${product.price}">Price</p>
+	            </a>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <a th:if="${currentPage > 0}"
+               th:href="@{'/?page=' + (${currentPage - 1})}" class="page-btn">« Prev</a>
+
+            <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a th:href="@{'/?page=' + ${i}}"
+                   th:text="${i + 1}"
+                   th:classappend="${i == currentPage} ? 'active' : ''"
+                   class="page-btn"></a>
+            </span>
+
+            <a th:if="${currentPage < totalPages - 1}"
+               th:href="@{'/?page=' + (${currentPage + 1})}" class="page-btn">Next »</a>
+        </div>
+    </main>
 </body>
 </html>
