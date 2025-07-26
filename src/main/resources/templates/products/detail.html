@@ -210,9 +210,7 @@
             </div>
         </div>
     </header>
-    <div class="breadcrumb">
-        <a th:href="@{/home}" class="link">Home</a> &gt; <a th:href="@{'/category/' + ${product.categoryId}}" class="link">Category</a> &gt; <span th:text="${product.name}"></span>
-    </div>
+    
     <div class="product-details-container">
         <div class="image-section">
             <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
@@ -247,7 +245,6 @@
         </div>
     </div>
     <script>
-    // Show popup after adding to wishlist
     document.getElementById('addToWishlistForm').addEventListener('submit', function(e) {
         e.preventDefault();
         fetch(this.action, {method: 'POST'})
@@ -260,18 +257,35 @@
     function closePopup() {
         document.getElementById('reviewPopup').style.display = 'none';
     }
-    // Close popup after review submit
     document.getElementById('reviewForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        fetch(this.action, {method: 'POST', body: formData})
-            .then(res => {
-                if(res.ok) {
-                    closePopup();
-                    location.reload();
-                }
-            });
+      e.preventDefault();
+      // gather values
+      const fd = new FormData(this);
+      const payload = {
+        title:   fd.get('title'),
+        content: fd.get('content'),
+        rating:  parseFloat(fd.get('rating'))
+      };
+
+      fetch(this.action, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => {
+        if (res.ok) {
+          closePopup();
+          location.reload();
+        } else {
+          console.error('Review failed', res.status);
+        }
+      })
+      .catch(console.error);
     });
+
     function updateLovePointer(val) {
         document.getElementById('ratingValue').textContent = val;
         let love = document.getElementById('lovePointer');

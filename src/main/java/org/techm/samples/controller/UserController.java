@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +14,8 @@ import org.techm.samples.entity.Role;
 import org.techm.samples.entity.User;
 import org.techm.samples.service.auth.JwtService;
 import org.techm.samples.service.auth.UserInfoService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping("/auth")
@@ -79,14 +82,15 @@ public class UserController {
 
     // Thymeleaf: Handle login form
     @PostMapping("/loginUser")
-    public String loginUser(@ModelAttribute("authRequest") AuthRequest authRequest, Model model) {
+    public String loginUser(@ModelAttribute("authRequest") AuthRequest authRequest, Model model, HttpServletRequest request) {
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
         );
         if (authentication.isAuthenticated()) {
-            String token = jwtService.generateToken(authRequest.getUsername());
-            model.addAttribute("token", token);
-            return "userProfile"; // maps to userProfile.html
+        	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        	String remoteUser = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
+        	model.addAttribute("remoteUser", remoteUser);
+            return "redirect:/";
         } else {
             model.addAttribute("error", "Invalid credentials");
             return "login";

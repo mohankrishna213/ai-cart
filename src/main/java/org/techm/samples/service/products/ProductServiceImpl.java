@@ -1,98 +1,94 @@
 package org.techm.samples.service.products;
- 
+
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
- 
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.techm.samples.entity.Products;
+import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.repository.ProductsRepository;
- 
+
 @Service
 public class ProductServiceImpl implements ProductService {
- 
-	@Autowired
-	private ProductsRepository productRepo;
- 
-	@Override
-	public Products addProduct(Products product) {
-		productRepo.save(product);
-		return product;
-		
-	}
- 
-	@Override
-	public Products getProductById(Long id) {
-		Products product=productRepo.findById(id).orElse(null);
-		return product;
-	}
- 
+
+    @Autowired
+    private ProductsRepository productRepo;
+
+    @Override
+    public Products addProduct(Products product) {
+        return productRepo.save(product);
+    }
+
+    @Override
+    public Products getProductById(Long id) {
+        return productRepo.findById(id)
+            .orElseThrow(() ->
+                new ResourceNotFoundException("Product not found with id: " + id));
+    }
+
+    @Override
+    public Page<Products> getAllProducts(Pageable pageable) {
+        return productRepo.findAll(pageable);
+    }
+
+    @Override
+    public List<Products> getAllProducts() {
+        return productRepo.findAll();
+    }
+
+    @Override
+    public void deleteProduct(Long id) {
+        Products prod = getProductById(id);
+        productRepo.delete(prod);
+    }
+
+    @Override
+    public Products updateProduct(Products product, Long id) {
+        Products existing = getProductById(id);
+        existing.setAvailable(product.isAvailable());
+        existing.setName(product.getName());
+        existing.setDescription(product.getDescription());
+        existing.setImageUrl(product.getImageUrl());
+        existing.setPrice(product.getPrice());
+        existing.setStockQuantity(product.getStockQuantity());
+        existing.setCategory(product.getCategory());
+        return productRepo.save(existing);
+    }
+
+    @Override
+    public List<Products> getProductsContaining(String keyword) {
+        return productRepo.findByNameContaining(keyword);
+    }
+
+    @Override
+    public List<Products> getProductsByCategory(Long categoryId) {
+        return productRepo.findByCategoryId(categoryId);
+    }
+
+    @Override
+    public List<Products> getAvailableProducts() {
+        return productRepo.findByAvailableTrue();
+    }
+
+    @Override
+    public List<Products> searchProductsByName(String keyword) {
+        return productRepo.findByNameContainingIgnoreCase(keyword);
+    }
+
+    @Override
+    public List<Products> getProductsByPriceRange(double minPrice, double maxPrice) {
+        return productRepo.findByPriceBetween(minPrice, maxPrice);
+    }
+
+    @Override
+    public List<Products> getTopRatedProducts() {
+        return productRepo.findTopRatedProducts();
+    }
+
 	@Override
 	public Optional<Products> getProductByIdOptional(Long id) {
-	    return productRepo.findById(id);
+		return productRepo.findById(id);
 	}
- 
-	@Override
-	public List<Products> getAllProducts() {
-		List<Products> products=productRepo.findAll();
-		return products;
-	}
- 
-	@Override
-	public Page<Products> getAllProducts(Pageable pageable) {
-		return productRepo.findAll(pageable);
-	}
- 
-	@Override
-	public void deleteProduct(Long id) {
-		productRepo.deleteById(id);
-		
-	}
- 
-	@Override
-	public Products updateProduct(Products product,Long id) {
-		Products updatedProduct=productRepo.findById(id).orElse(product);
-		updatedProduct.setAvailable(product.isAvailable());
-		updatedProduct.setName(product.getName());
-		updatedProduct.setDescription(product.getDescription());
-		updatedProduct.setImageUrl(product.getImageUrl());
-		updatedProduct.setPrice(product.getPrice());
-		updatedProduct.setStockQuantity(product.getStockQuantity());
-		updatedProduct.setCategory(product.getCategory());
-		return productRepo.save(updatedProduct);
-		
-	}
-	
-	@Override
-	public List<Products> getProductsContaining(String keyword) {
-		return productRepo.findByNameContaining(keyword);
-	}
-	
-	@Override
-	public List<Products> getProductsByCategory(Long categoryId) {
-	    return productRepo.findByCategoryId(categoryId);
-	}
- 
-	@Override
-	public List<Products> getAvailableProducts() {
-	    return productRepo.findByAvailableTrue();
-	}
- 
-	@Override
-	public List<Products> searchProductsByName(String keyword) {
-	    return productRepo.findByNameContainingIgnoreCase(keyword);
-	}
- 
-	@Override
-	public List<Products> getProductsByPriceRange(double minPrice, double maxPrice) {
-	    return productRepo.findByPriceBetween(minPrice, maxPrice);
-	}
- 
-	@Override
-	public List<Products> getTopRatedProducts() {
-	    return productRepo.findTopRatedProducts();
-	}
- 
 }

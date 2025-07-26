@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -37,65 +38,76 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers(
-                    "/auth/generateToken",
-                    "/auth/registerPage",
-                    "/auth/registerUser",
-                    "/auth/loginPage",
-                    "/auth/loginUser",
-                    "/css/**",
-                    "/js/**",
-                    "/images/**",
-                    "/products",
-                    "/products/",
-                    "/products/list",
-                    "/products/search",
-                    "/products/category/**",
-                    "/products/{id}",
-                    "/api/products",
-                    "/api/products/search",
-                    "/api/products/{id}",
-                    "/api/products/category/**",
-                    "/api/products/available",
-                    "/api/products/price-range",
-                    "/api/products/top-rated",
-                    "/api/categories",
-                    "/",
-                    "/home",
-                    "/category/{categoryId}",
-                    "/product/{productId}"
+          .csrf(csrf -> csrf.disable())
 
-                ).permitAll()
+          // 1. URI Authorization by Role
+          .authorizeHttpRequests(auth -> auth
 
-                // Admin-only endpoints
-                .requestMatchers(
-                    "/products/admin",
-                    "/products/admin/new",
-                    "/products/admin/{id}/edit",
-                    "/products/admin/{id}",
-                    "/products/admin/{id}/delete",
-                    "/api/products/admin/**",
-                    "/api/categories/admin",
-                    "/api/categories/admin/{id}"
-                ).hasAuthority("ADMIN")
+            // Public (login, register, token gen, static assets)
+            .requestMatchers(
+              "/auth/generateToken",
+              "/auth/registerPage",
+              "/auth/registerUser",
+              "/auth/loginPage",
+              "/auth/loginUser",
+              "/css/**",
+              "/js/**",
+              "/images/**"
+            ).permitAll()
 
-                // Customer-only endpoints
-                .requestMatchers("/auth/user/**").hasAuthority("CUSTOMER")
+            // Admin UI (Thymeleaf) and Admin APIs
+            .requestMatchers("/products/admin/**").hasAuthority("ADMIN")
+            .requestMatchers("/api/products/admin/**", "/api/categories/admin/**")
+              .hasAuthority("ADMIN")
 
-                // Review endpoints
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/product/{productId}").authenticated()
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/reviews/product/{productId}").hasAuthority("CUSTOMER")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/reviews/{reviewId}").hasAnyAuthority("ADMIN", "CUSTOMER")
+            // Customer UI ─ only logged-in CUSTOMERS can browse/search/detail/wishlist
+            .requestMatchers(
+              "/", "/home",
+              "/category/**",
+              "/product/**",
+              "/products",
+              "/products/list",
+              "/products/search",
+              "/products/price-range",
+              "/products/top-rated",
+              "/wishlist"
+            ).hasAuthority("CUSTOMER")
 
-                // All other requests require authentication
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            // API: Reviews (GET any authenticated, POST by CUSTOMER, DELETE by ADMIN or CUSTOMER)
+            .requestMatchers(HttpMethod.GET,    "/api/reviews/product/**")
+              .authenticated()
+            .requestMatchers(HttpMethod.POST,   "/api/reviews/product/**")
+              .hasAuthority("CUSTOMER")
+            .requestMatchers(HttpMethod.DELETE, "/api/reviews/**")
+              .hasAnyAuthority("ADMIN", "CUSTOMER")
+
+            // Everything else requires authentication
+            .anyRequest().authenticated()
+          )
+
+          // 2. Session management: allow sessions for form-login
+          .sessionManagement(sess -> 
+            sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+          )
+
+          // 3. JWT filter for API calls
+          .authenticationProvider(authenticationProvider())
+          .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+          // 4. Form-based login for the UI
+          .formLogin(login -> login
+              .loginPage("/auth/loginPage")
+              .loginProcessingUrl("/auth/loginUser")
+              .defaultSuccessUrl("/", true)
+              .permitAll()
+          )
+
+          // 5. Logout
+          .logout(logout -> logout
+              .logoutUrl("/logout")
+              .logoutSuccessUrl("/auth/loginPage")
+              .permitAll()
+          );
 
         return http.build();
     }
@@ -109,7 +121,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }

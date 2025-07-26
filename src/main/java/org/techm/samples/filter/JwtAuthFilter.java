@@ -52,5 +52,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+        
+        System.out.println("JWT Filter triggered for: " + request.getRequestURI());
+        System.out.println("Authorization Header: " + authHeader);
+        System.out.println("Extracted Username: " + username);
+        System.out.println("SecurityContext Auth: " + SecurityContextHolder.getContext().getAuthentication());
     }
 }

@@ -71,7 +71,10 @@
         </div>
     </header>
     <main class="products-section">
-        <h2 th:text="'Products in ' + ${categories.?[id == categoryId][0].name}"></h2>
+        <h2 th:text="'Products in ' + ${categories.?[#this.id == id][0].name}">
+  			Category Name
+		</h2>
+
         <div class="products-grid">
             <div class="product-card" th:each="product : ${products}">
                 <a th:href="@{'/product/' + ${product.id}}">

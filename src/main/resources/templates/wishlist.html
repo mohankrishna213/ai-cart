@@ -90,11 +90,11 @@
         <h2>Your Wishlist</h2>
         <div class="products-grid">
             <div class="product-card" th:each="item : ${wishlistItems}">
-                <a th:href="@{'/product/' + ${item.productId}}">
-                    <img th:src="${item.productImage}" th:alt="${item.productName}" />
-                    <h3 th:text="${item.productName}">Product Name</h3>
+                <a th:href="@{'/product/' + ${item.product.id}}">
+                    <img th:src="${item.product.imageUrl}" th:alt="${item.product.name}" />
+                    <h3 th:text="${item.product.name}">Product Name</h3>
                 </a>
-                <form th:action="@{'/products/wishlist/remove/' + ${item.productId}}" method="post">
+                <form th:action="@{/wishlist/remove/{id}(id=${item.product.id})}" method="post">
                     <button type="submit" class="remove-btn">Remove</button>
                 </form>
             </div>

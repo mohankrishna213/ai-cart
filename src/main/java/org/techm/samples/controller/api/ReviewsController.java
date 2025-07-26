@@ -2,6 +2,7 @@ package org.techm.samples.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +44,7 @@ public class ReviewsController {
     }
 
     // Create a review by customer
-    @PostMapping("/product/{productId}")
+    @PostMapping(path="/product/{productId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('CUSTOMER')")
     public ResponseEntity<?> createReview(@PathVariable Long productId, @RequestBody ReviewsDTO reviewDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

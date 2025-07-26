@@ -12,81 +12,67 @@ import org.techm.samples.repository.CategoriesRepository;
 import org.techm.samples.repository.ProductsRepository;
 
 @Service
-public class CategoriesServiceImpl implements CategoriesService{
-	
-	@Autowired
-	private CategoriesRepository categoryRepo;
-	
-	@Autowired
-	private ProductsRepository productsRepository;
-	
-	@Override
-	public Categories addCategory(Categories category) {
-		categoryRepo.save(category);
-		return category;
-		
-	}
+public class CategoriesServiceImpl implements CategoriesService {
 
-	@Override
-	public List<Categories> getAllCategories() {
-		List<Categories> categories = categoryRepo.findAll();
-		return categories;
-	}
+    @Autowired
+    private CategoriesRepository categoryRepo;
 
-	@Override
-	public Categories getCategoryById(Long id) {
-		Categories category = categoryRepo.findById(id).orElse(null);
-		return category;
-	}
+    @Autowired
+    private ProductsRepository productsRepository;
 
-	@Override
-	public List<Categories> getCategoryByName(String name) {
-		List<Categories> categories = categoryRepo.getCategoryByName(name);
-		return categories;
-	}
+    @Override
+    public Categories addCategory(Categories category) {
+        return categoryRepo.save(category);
+    }
 
-	@Override
-	public void deleteCategory(Long id) {
-		categoryRepo.deleteById(id);
-		
-	}
+    @Override
+    public List<Categories> getAllCategories() {
+        return categoryRepo.findAll();
+    }
 
-	@Override
-	public Categories updateCategory(Categories category, Long id) {
-		Categories updatedCategory = categoryRepo.findById(id).orElse(category);
-		updatedCategory.setName(category.getName());
-		updatedCategory.setDescription(category.getDescription());
-		return categoryRepo.save(updatedCategory);
-	}
+    @Override
+    public Categories getCategoryById(Long id) {
+        return categoryRepo.findById(id)
+            .orElseThrow(() ->
+                new ResourceNotFoundException("Category not found with id: " + id));
+    }
 
-	@Override
-	public ProductsDTO addProductToCategory(Long categoryId, ProductsDTO dto) {
-	    Categories category = categoryRepo.findById(categoryId)
-	        .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+    @Override
+    public List<Categories> getCategoryByName(String name) {
+        return categoryRepo.getCategoryByName(name);
+    }
 
-	    Products product = new Products();
-	    product.setName(dto.getName());
-	    product.setDescription(dto.getDescription());
-	    product.setPrice(dto.getPrice());
-	    product.setStockQuantity(dto.getStockQuantity());
-	    product.setImageUrl(dto.getImageUrl());
-	    product.setAvailable(dto.isAvailable());
-	    product.setCategory(category); // Link to category
+    @Override
+    public void deleteCategory(Long id) {
+        Categories cat = getCategoryById(id);
+        categoryRepo.delete(cat);
+    }
 
-	    Products saved = productsRepository.save(product);
+    @Override
+    public Categories updateCategory(Categories category, Long id) {
+        Categories existing = getCategoryById(id);
+        existing.setName(category.getName());
+        existing.setDescription(category.getDescription());
+        return categoryRepo.save(existing);
+    }
 
-	    // Convert back to DTO
-	    ProductsDTO result = new ProductsDTO();
-	    result.setId(saved.getId());
-	    result.setName(saved.getName());
-	    result.setDescription(saved.getDescription());
-	    result.setPrice(saved.getPrice());
-	    result.setStockQuantity(saved.getStockQuantity());
-	    result.setImageUrl(saved.getImageUrl());
-	    result.setAvailable(saved.isAvailable());
-	    result.setCategoryId(categoryId);
+    @Override
+    public ProductsDTO addProductToCategory(Long categoryId, ProductsDTO dto) {
+        Categories category = getCategoryById(categoryId);
 
-	    return result;
-	}
+        Products product = new Products();
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setStockQuantity(dto.getStockQuantity());
+        product.setImageUrl(dto.getImageUrl());
+        product.setAvailable(dto.isAvailable());
+        product.setCategory(category);
 
+        Products saved = productsRepository.save(product);
+
+        dto.setId(saved.getId());
+        dto.setCategoryId(categoryId);
+        return dto;
+    }
 }
