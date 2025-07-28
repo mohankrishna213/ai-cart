@@ -10,7 +10,7 @@
         padding: 0;
         color: #444;
     }
-	a {
+    a {
         text-decoration: none;
         color: #444;
     }
@@ -159,7 +159,7 @@
     <!-- Header Section -->
     <header>
         <div class="nav-container">
-            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <a th:href="@{/home}"><img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo"></a>
             <div class="search-bar">
                 <form th:action="@{/products/search}" method="get">
                     <input type="text" name="q" placeholder="Search products..." />
@@ -174,7 +174,7 @@
                 </ul>
             </nav>
             <div class="top-links">
-    <a th:href="@{/wishlist}">Wishlist</a>
+    <a th:if="${!isAdmin}" th:href="@{/wishlist}">Wishlist</a>
 
     <!-- Show login if user not logged in -->
     <div th:if="${remoteUser == null}">
@@ -197,6 +197,95 @@
         </div>
     </header>
 
+    <!-- Admin Category Controls -->
+    <div th:if="${isAdmin}">
+        <nav>
+            <ul style="display: flex;">
+                <li th:each="category : ${categories}" style="position: relative;">
+                    <a th:text="${category.name}" th:href="@{'/category/' + ${category.id}}"></a>
+                    <div class="admin-cat-dropdown" style="display: none; position: absolute; background: #fff; border: 1px solid #ccc; z-index: 10; min-width: 100px;" onmouseover="this.style.display='block'" onmouseout="this.style.display='none'">
+                        <button 
+  th:attr="data-id=${category.id},data-name=${category.name},data-description=${category.description}" 
+  onclick="editCategoryFromData(this)">Edit</button>
+                        <button th:onclick="'deleteCategory(' + ${category.id} + ')'">Delete</button>
+                    </div>
+                </li>
+                <li>
+                    <button onclick="openAddCategoryModal()">Add Category</button>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Category Modal Popup -->
+    <div id="categoryModal" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%,0); background:#fff; border:1px solid #ccc; padding:20px; z-index:100;">
+        <form id="categoryForm">
+            <input type="hidden" id="catId" name="id" />
+            <label>Name: <input type="text" id="catName" name="name" required /></label><br><br>
+            <label>Description: <textarea id="catDesc" name="description" required></textarea></label><br><br>
+            <button type="submit">Save</button>
+            <button type="button" onclick="closeCategoryModal()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+    // Show dropdown on hover for admin categories
+    document.querySelectorAll('li[th\\:each="category : ${categories}"]').forEach(function(li) {
+        li.addEventListener('mouseenter', function() {
+            var dropdown = li.querySelector('.admin-cat-dropdown');
+            if(dropdown) dropdown.style.display = 'block';
+        });
+        li.addEventListener('mouseleave', function() {
+            var dropdown = li.querySelector('.admin-cat-dropdown');
+            if(dropdown) dropdown.style.display = 'none';
+        });
+    });
+
+    function openAddCategoryModal() {
+        document.getElementById('catId').value = '';
+        document.getElementById('catName').value = '';
+        document.getElementById('catDesc').value = '';
+        document.getElementById('categoryModal').style.display = 'block';
+    }
+    function openEditCategoryModal(id, name, description) {
+        document.getElementById('catId').value = id;
+        document.getElementById('catName').value = name;
+        document.getElementById('catDesc').value = description;
+        document.getElementById('categoryModal').style.display = 'block';
+    }
+    function closeCategoryModal() {
+        document.getElementById('categoryModal').style.display = 'none';
+    }
+    document.getElementById('categoryForm').onsubmit = function(e) {
+        e.preventDefault();
+        var id = document.getElementById('catId').value;
+        var name = document.getElementById('catName').value;
+        var description = document.getElementById('catDesc').value;
+        var url = id ? '/admin/category/edit' : '/admin/category/add';
+        var payload = id ? { id, name, description } : { name, description };
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(r => r.json()).then(data => {
+            location.reload();
+        });
+    };
+    function deleteCategory(id) {
+        if(confirm('Delete this category?')) {
+            fetch('/admin/category/delete/' + id, { method: 'DELETE' })
+                .then(r => r.json()).then(data => { location.reload(); });
+        }
+    }
+    function editCategoryFromData(btn) {
+    openEditCategoryModal(
+        btn.getAttribute('data-id'),
+        btn.getAttribute('data-name'),
+        btn.getAttribute('data-description')
+    );
+}
+    </script>
+
     <!-- Carousel -->
     <section class="carousel">
         <div class="carousel-slide">
@@ -212,10 +301,10 @@
         <div class="products-grid">
             <div class="product-card" th:each="product : ${products}">
                 <a th:href="@{'/product/' + ${product.id}}">
-	                <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
-	                <h3 th:text="${product.name}">Product Name</h3>
-	                <p th:text="'₹ ' + ${product.price}">Price</p>
-	            </a>
+                    <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+                    <h3 th:text="${product.name}">Product Name</h3>
+                    <p th:text="'₹ ' + ${product.price}">Price</p>
+                </a>
             </div>
         </div>
 

@@ -36,7 +36,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping("")
-public class CustomerViewController {
+public class UIController {
     @Autowired
     private CategoriesService categoriesService;
     @Autowired
@@ -58,10 +58,10 @@ public class CustomerViewController {
             @RequestParam(defaultValue = "asc") String sortDir,
                        Model model,
                        HttpServletRequest request) {
-    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String remoteUser = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
         model.addAttribute("remoteUser", remoteUser);
-    	System.out.println(request.getRemoteUser());
+        System.out.println(request.getRemoteUser());
         model.addAttribute("categories", categoriesService.getAllCategories());
         
         Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
@@ -70,7 +70,12 @@ public class CustomerViewController {
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
-
+        // Add isAdmin attribute for Thymeleaf
+        boolean isAdmin = false;
+        if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
+            isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        }
+        model.addAttribute("isAdmin", isAdmin);
         return "home";
     }
 
@@ -100,6 +105,13 @@ public class CustomerViewController {
         model.addAttribute("categories", categoriesService.getAllCategories());
         model.addAttribute("products", productService.getProductsByCategory(categoryId));
         model.addAttribute("categoryId", categoryId);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = false;
+        if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
+            isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        }
+        model.addAttribute("isAdmin", isAdmin);
+
         return "products/category";
     }
 
@@ -119,6 +131,11 @@ public class CustomerViewController {
             inWishlist = wishlistService.getWishlistByUser(user).stream().anyMatch(w -> w.getProduct().getId().equals(product.getId()));
         }
         model.addAttribute("inWishlist", inWishlist);
+        boolean isAdmin = false;
+        if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
+            isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        }
+        model.addAttribute("isAdmin", isAdmin);
         return "products/detail";
     }
 
@@ -154,28 +171,28 @@ public class CustomerViewController {
     
     @PostMapping("products/wishlist/add/{productId}")
 //	@PreAuthorize("hasAuthority('CUSTOMER')")
-	public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId) {
-    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         System.out.println(email);
-	    Optional<User> userOpt = userInfoRepository.findByEmail(email);
-	    System.out.println(userOpt.toString());
-	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
-	    if (userOpt.isEmpty()) {
-	        throw new ResourceNotFoundException("User not found: " + email);
-	    }
-	    if (productOpt.isEmpty()) {
-	        throw new ResourceNotFoundException("Product not found with id: " + productId);
-	    }
-	    Wishlist_items item = wishlistService.addToWishlist(userOpt.get(), productOpt.get());
-	    WishlistItemsDTO dto = new WishlistItemsDTO();
-	    dto.setId(item.getId());
-	    dto.setUserId(item.getUser().getId());
-	    dto.setProductId(item.getProduct().getId());
-	    dto.setProductName(item.getProduct().getName());
-	    dto.setProductImage(item.getProduct().getImageUrl());
-	    return new ResponseEntity<>(dto, HttpStatus.OK);
-	}
+        Optional<User> userOpt = userInfoRepository.findByEmail(email);
+        System.out.println(userOpt.toString());
+        Optional<Products> productOpt = productService.getProductByIdOptional(productId);
+        if (userOpt.isEmpty()) {
+            throw new ResourceNotFoundException("User not found: " + email);
+        }
+        if (productOpt.isEmpty()) {
+            throw new ResourceNotFoundException("Product not found with id: " + productId);
+        }
+        Wishlist_items item = wishlistService.addToWishlist(userOpt.get(), productOpt.get());
+        WishlistItemsDTO dto = new WishlistItemsDTO();
+        dto.setId(item.getId());
+        dto.setUserId(item.getUser().getId());
+        dto.setProductId(item.getProduct().getId());
+        dto.setProductName(item.getProduct().getName());
+        dto.setProductImage(item.getProduct().getImageUrl());
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
     
     @PostMapping("/wishlist/remove/{productId}")
     public String removeFromWishlistUI(
@@ -185,5 +202,55 @@ public class CustomerViewController {
         // Delegates to your @DeleteMapping in WishlistApiController
         apiController.removeProductFromWishlist(productId, principal);
         return "redirect:/wishlist";
+    }
+
+    // --- Admin Category Management ---
+    @PostMapping("/admin/category/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> addCategory(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.entity.Categories category) {
+        var saved = categoriesService.addCategory(category);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PostMapping("/admin/category/edit")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> editCategory(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.entity.Categories category) {
+        var updated = categoriesService.updateCategory(category, category.getId());
+        return ResponseEntity.ok(updated);
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/admin/category/delete/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
+        categoriesService.deleteCategory(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // --- Admin Product Management ---
+    @PostMapping("/admin/product/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> addProduct(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.dto.ProductsDTO dto) {
+        if (dto.getCategoryId() == null) {
+            return ResponseEntity.badRequest().body("Category ID is required");
+        }
+        var savedDto = categoriesService.addProductToCategory(dto.getCategoryId(), dto);
+        return ResponseEntity.ok(savedDto);
+    }
+
+    @PostMapping("/admin/product/edit")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> editProduct(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.dto.ProductsDTO dto) {
+        if (dto.getCategoryId() == null || dto.getId() == null) {
+            return ResponseEntity.badRequest().body("Category ID and Product ID are required");
+        }
+        var updatedDto = categoriesService.updateProductInCategory(dto.getCategoryId(), dto);
+        return ResponseEntity.ok(updatedDto);
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/admin/product/delete/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok().build();
     }
 }

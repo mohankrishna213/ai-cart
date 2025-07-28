@@ -59,7 +59,7 @@
 <body>
     <header>
         <div class="nav-container">
-            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <a th:href="@{/home}"><img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo"></a>
             <nav>
                 <ul>
                     <li th:each="cat : ${categories}" th:classappend="${cat.id} == ${categoryId} ? 'active'">
@@ -68,12 +68,15 @@
                 </ul>
             </nav>
             <a th:href="@{/wishlist}">Wishlist</a>
+            <a th:if="${!isAdmin}" th:href="@{/wishlist}">Wishlist</a>
         </div>
     </header>
     <main class="products-section">
-        <h2 th:text="'Products in ' + ${categories.?[#this.id == id][0].name}">
-  			Category Name
-		</h2>
+        <th:block th:with="cat=${categories.?[#this.id == id]}">
+            <h2 th:text="'Products in ' + ${cat.size() > 0 ? cat.get(categoryId-1).name : 'Unknown Category'}">
+                Category Name
+            </h2>
+        </th:block>
 
         <div class="products-grid">
             <div class="product-card" th:each="product : ${products}">
@@ -82,8 +85,98 @@
                     <h3 th:text="${product.name}">Product Name</h3>
                     <p th:text="'₹ ' + ${product.price}">Price</p>
                 </a>
+                <!-- Admin Product Controls -->
+                <div th:if="${isAdmin}" style="margin-top:10px;">
+                    <button
+                      th:attr="data-id=${product.id},data-name=${product.name},data-price=${product.price},data-imageurl=${product.imageUrl},data-description=${product.description},data-available=${product.available},data-stockquantity=${product.stockQuantity}"
+                      onclick="editProductFromData(this)">Edit</button>
+                    <button th:onclick="'deleteProduct(' + ${product.id} + ')'">Delete</button>
+                </div>
             </div>
         </div>
+
+        <!-- Admin Add Product Button -->
+        <div th:if="${isAdmin}" style="margin: 20px 0; text-align: right;">
+            <button onclick="openAddProductModal()">Add Product</button>
+        </div>
+
+    <!-- Product Modal Popup -->
+    <div id="productModal" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%,0); background:#fff; border:1px solid #ccc; padding:20px; z-index:100;">
+        <form id="productForm">
+            <input type="hidden" id="prodId" name="id" />
+            <input type="hidden" id="prodCategoryId" name="categoryId" th:value="${categoryId}" />
+            <label>Name: <input type="text" id="prodName" name="name" required /></label><br><br>
+            <label>Description: <textarea id="prodDesc" name="description" required></textarea></label><br><br>
+            <label>Price: <input type="number" id="prodPrice" name="price" required step="0.01" min="0" /></label><br><br>
+            <label>Available: <input type="checkbox" id="prodAvailable" name="available" /></label><br><br>
+            <label>Stock Quantity: <input type="number" id="prodStock" name="stockQuantity" min="0" /></label><br><br>
+            <label>Image URL: <input type="text" id="prodImage" name="imageUrl" required /></label><br><br>
+            <button type="submit">Save</button>
+            <button type="button" onclick="closeProductModal()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+    function openAddProductModal() {
+        document.getElementById('prodId').value = '';
+        document.getElementById('prodName').value = '';
+        document.getElementById('prodDesc').value = '';
+        document.getElementById('prodPrice').value = '';
+        document.getElementById('prodAvailable').checked = true;
+        document.getElementById('prodStock').value = '';
+        document.getElementById('prodImage').value = '';
+        document.getElementById('productModal').style.display = 'block';
+    }
+    function openEditProductModal(id, name, price, imageUrl, description, available, stockQuantity) {
+        document.getElementById('prodId').value = id;
+        document.getElementById('prodName').value = name;
+        document.getElementById('prodDesc').value = description;
+        document.getElementById('prodPrice').value = price;
+        document.getElementById('prodAvailable').checked = available === true || available === 'true';
+        document.getElementById('prodStock').value = stockQuantity;
+        document.getElementById('prodImage').value = imageUrl;
+        document.getElementById('productModal').style.display = 'block';
+    }
+    function editProductFromData(btn) {
+        openEditProductModal(
+            btn.getAttribute('data-id'),
+            btn.getAttribute('data-name'),
+            btn.getAttribute('data-price'),
+            btn.getAttribute('data-imageurl'),
+            btn.getAttribute('data-description'),
+            btn.getAttribute('data-available'),
+            btn.getAttribute('data-stockquantity')
+        );
+    }
+    function closeProductModal() {
+        document.getElementById('productModal').style.display = 'none';
+    }
+    document.getElementById('productForm').onsubmit = function(e) {
+        e.preventDefault();
+        var id = document.getElementById('prodId').value;
+        var name = document.getElementById('prodName').value;
+        var description = document.getElementById('prodDesc').value;
+        var price = document.getElementById('prodPrice').value;
+        var available = document.getElementById('prodAvailable').checked;
+        var stockQuantity = document.getElementById('prodStock').value;
+        var imageUrl = document.getElementById('prodImage').value;
+        var categoryId = document.getElementById('prodCategoryId').value;
+        var url = id ? '/admin/product/edit' : '/admin/product/add';
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, name, description, price, available, stockQuantity, imageUrl, categoryId })
+        }).then(r => r.json()).then(data => {
+            location.reload();
+        });
+    };
+    function deleteProduct(id) {
+        if(confirm('Delete this product?')) {
+            fetch('/admin/product/delete/' + id, { method: 'DELETE' })
+                .then(r => r.json()).then(data => { location.reload(); });
+        }
+    }
+    </script>
     </main>
 </body>
 </html>

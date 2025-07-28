@@ -21,12 +21,12 @@ public class Reviews {
 	private Long id;
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "product_id")
-	@JsonBackReference
+	@JsonBackReference("reviews-product")
 	private Products product;
 	
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "user_id")
-	@JsonBackReference
+	@JsonBackReference("reviews-user")
 	private User user;
 	
 	private String title;

@@ -6,6 +6,7 @@ import org.techm.samples.dto.ProductsDTO;
 import org.techm.samples.entity.Categories;
 
 public interface CategoriesService {
+	ProductsDTO updateProductInCategory(Long categoryId, org.techm.samples.dto.ProductsDTO dto);
 	Categories addCategory(Categories category);
 	
 	List<Categories> getAllCategories();

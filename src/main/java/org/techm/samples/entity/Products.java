@@ -21,38 +21,38 @@ public class Products {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	private Long id;
 	
-    private String name;
-    private String description;
-    private double price;
-    private boolean available=true;
-    private Integer stockQuantity=0;
-    private String imageUrl;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    
-    @ManyToOne(optional = true)
-    @JoinColumn(name = "category_id")
-    private Categories category;
-    
-    @OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
-    @JsonManagedReference
-    private List<Reviews> reviews;
-    
-    @OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Wishlist_items> wishlist_items;
-    
-    @PrePersist
-    protected void onCreate() {
-    	createdAt=updatedAt=LocalDateTime.now();
-    }
-    
-    @PreUpdate
-    protected void onUpdate() {
-    	updatedAt=LocalDateTime.now();
-    }
-    
+	private String name;
+	private String description;
+	private double price;
+	private boolean available=true;
+	private Integer stockQuantity=0;
+	private String imageUrl;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
+	
+	@ManyToOne(optional = true)
+	@JoinColumn(name = "category_id")
+	private Categories category;
+	
+	@OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
+	@JsonManagedReference("reviews-product")
+	private List<Reviews> reviews;
+	
+	@OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
+	private List<Wishlist_items> wishlist_items;
+	
+	@PrePersist
+	protected void onCreate() {
+		createdAt=updatedAt=LocalDateTime.now();
+	}
+	
+	@PreUpdate
+	protected void onUpdate() {
+		updatedAt=LocalDateTime.now();
+	}
+	
 	public Long getId() {
 		return id;
 	}

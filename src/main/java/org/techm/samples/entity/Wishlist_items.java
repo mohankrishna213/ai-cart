@@ -18,6 +18,7 @@ public class Wishlist_items {
 	
 	@ManyToOne(optional = false)
 	@JoinColumn(name="user_id")
+	@com.fasterxml.jackson.annotation.JsonBackReference("wishlist-user")
 	private User user;
 	
 	@ManyToOne(optional = false)

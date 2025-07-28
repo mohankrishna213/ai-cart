@@ -186,7 +186,7 @@
 <body>
     <header>
         <div class="nav-container">
-            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <a th:href="@{/home}"><img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo"></a>
             <nav>
                 <ul>
                     <li th:each="category : ${categories}">
@@ -195,7 +195,7 @@
                 </ul>
             </nav>
             <div class="top-links">
-                <a th:href="@{/wishlist}">Wishlist</a>
+                <a th:if="${!isAdmin}" th:href="@{/wishlist}">Wishlist</a>
                 <div th:if="${remoteUser == null}">
                     <a th:href="@{/auth/loginPage}"><button>Login</button></a>
                 </div>
@@ -223,8 +223,22 @@
             <div class="price-section">
                 <p class="total-price" th:text="'₹ ' + ${product.price}">₹ 0.00</p>
                 <form th:action="@{'/products/wishlist/add/' + ${product.id}}" method="post" id="addToWishlistForm">
-                    <button type="submit" class="add-to-cart" id="addToWishlistBtn">🛒 Add To WishList</button>
+                    <button th:if="${!isAdmin}" type="submit" class="add-to-cart" id="addToWishlistBtn">🛒 Add To WishList</button>
                 </form>
+            </div>
+            <!-- Admin: Show all reviews for this product -->
+            <div style="margin-top:30px;">
+                <h3>All Reviews for this Product</h3>
+                <div th:if="${#lists.isEmpty(reviews)}">No reviews yet.</div>
+                <div th:each="review : ${reviews}" style="border:1px solid #eee; padding:10px; margin-bottom:10px;">
+                    <strong th:text="${review.user != null ? review.user.username : 'Unknown User'}">Username</strong>
+                    <span style="margin-left:10px; font-weight:500;" th:text="'Rating: ' + ${review.rating}"></span>
+                    <div style="margin-top:5px;">
+                        <span th:text="${review.title}"></span>
+                        <p th:text="${review.content}"></p>
+                        <button th:if="${isAdmin}" type="button" th:onclick="'removeReview(' + ${review.id} + ')'" style="color:#fff; background:#e25555; border:none; padding:6px 12px; border-radius:4px; margin-top:8px; cursor:pointer;">Remove Review</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -245,6 +259,12 @@
         </div>
     </div>
     <script>
+    function removeReview(reviewId) {
+        if(confirm('Are you sure you want to remove this review?')) {
+            fetch('/api/reviews/' + reviewId, { method: 'DELETE' })
+                .then(r => r.json()).then(data => { location.reload(); });
+        }
+    }
     document.getElementById('addToWishlistForm').addEventListener('submit', function(e) {
         e.preventDefault();
         fetch(this.action, {method: 'POST'})

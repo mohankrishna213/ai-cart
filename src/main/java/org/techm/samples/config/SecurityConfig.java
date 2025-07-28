@@ -53,7 +53,8 @@ public class SecurityConfig {
               "/auth/loginUser",
               "/css/**",
               "/js/**",
-              "/images/**"
+              "/images/**",
+              "/api/users/**"
             ).permitAll()
 
             // Admin UI (Thymeleaf) and Admin APIs
@@ -61,7 +62,7 @@ public class SecurityConfig {
             .requestMatchers("/api/products/admin/**", "/api/categories/admin/**")
               .hasAuthority("ADMIN")
 
-            // Customer UI ─ only logged-in CUSTOMERS can browse/search/detail/wishlist
+            // Home and browse/search/detail/wishlist: allow both ADMIN and CUSTOMER
             .requestMatchers(
               "/", "/home",
               "/category/**",
@@ -72,7 +73,7 @@ public class SecurityConfig {
               "/products/price-range",
               "/products/top-rated",
               "/wishlist"
-            ).hasAuthority("CUSTOMER")
+            ).hasAnyAuthority("ADMIN", "CUSTOMER")
 
             // API: Reviews (GET any authenticated, POST by CUSTOMER, DELETE by ADMIN or CUSTOMER)
             .requestMatchers(HttpMethod.GET,    "/api/reviews/product/**")

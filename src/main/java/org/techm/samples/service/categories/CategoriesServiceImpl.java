@@ -13,6 +13,23 @@ import org.techm.samples.repository.ProductsRepository;
 
 @Service
 public class CategoriesServiceImpl implements CategoriesService {
+    @Override
+    public ProductsDTO updateProductInCategory(Long categoryId, ProductsDTO dto) {
+        Products product = productsRepository.findById(dto.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + dto.getId()));
+        Categories category = getCategoryById(categoryId);
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setStockQuantity(dto.getStockQuantity());
+        product.setImageUrl(dto.getImageUrl());
+        product.setAvailable(dto.isAvailable());
+        product.setCategory(category);
+        Products saved = productsRepository.save(product);
+        dto.setId(saved.getId());
+        dto.setCategoryId(categoryId);
+        return dto;
+    }
 
     @Autowired
     private CategoriesRepository categoryRepo;

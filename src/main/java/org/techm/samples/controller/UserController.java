@@ -31,33 +31,7 @@ public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    // REST endpoint (not secured)
-    @GetMapping("/welcome")
-    @ResponseBody
-    public String welcome() {
-        return "Welcome! This endpoint is not secure.";
-    }
-
-//    // REST endpoint for registration
-//    @PostMapping("/register")
-//    @ResponseBody
-//    public String addNewUser(@RequestBody User userInfo) {
-//        return service.addUser(userInfo);
-//    }
-
-    // REST endpoint for token generation
-    @PostMapping("/generateToken")
-    @ResponseBody
-    public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
-        );
-        if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(authRequest.getUsername());
-        } else {
-            throw new UsernameNotFoundException("Invalid user request!");
-        }
-    }
+    
 
     // Thymeleaf: Show registration page
     @GetMapping("/registerPage")
@@ -97,9 +71,9 @@ public class UserController {
             new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
         );
         if (authentication.isAuthenticated()) {
-        	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        	String remoteUser = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
-        	model.addAttribute("remoteUser", remoteUser);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String remoteUser = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
+            model.addAttribute("remoteUser", remoteUser);
             return "redirect:/";
         } else {
             model.addAttribute("error", "Invalid credentials");

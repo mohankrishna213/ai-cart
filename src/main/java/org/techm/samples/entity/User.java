@@ -31,10 +31,11 @@ public class User {
 	private LocalDateTime updated_at;
 	
 	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
-	@JsonManagedReference
+	@JsonManagedReference("reviews-user")
 	private List<Reviews> reviews;
 	
 	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
+	@JsonManagedReference("wishlist-user")
 	private List<Wishlist_items> wishlist_items;
 	
 	@Enumerated(EnumType.STRING)
