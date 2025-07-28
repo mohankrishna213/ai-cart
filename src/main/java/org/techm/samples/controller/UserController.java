@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.techm.samples.dto.AuthRequest;
 import org.techm.samples.entity.Role;
 import org.techm.samples.entity.User;
+import org.techm.samples.exception.DuplicateUserException;
 import org.techm.samples.service.auth.JwtService;
 import org.techm.samples.service.auth.UserInfoService;
 
@@ -67,10 +68,19 @@ public class UserController {
 
     // Thymeleaf: Handle registration form
     @PostMapping("/registerUser")
-    public String registerUser(@ModelAttribute("user") User user) {
-    	user.setRole(Role.CUSTOMER);
-        service.addUser(user);
-        return "redirect:/auth/loginPage";
+    public String registerUser(@ModelAttribute("user") User user, @RequestParam("confirmPassword") String confirmPassword, Model model) {
+        if (!user.getPassword().equals(confirmPassword)) {
+            model.addAttribute("errorMessage", "Password and Confirm Password do not match.");
+            return "register";
+        }
+        try {
+            user.setRole(Role.CUSTOMER);
+            service.addUser(user);
+            return "redirect:/auth/loginPage";
+        } catch (DuplicateUserException e) {
+            model.addAttribute("errorMessage", "A user with email " + user.getEmail() + " already exists.");
+            return "register";
+        }
     }
 
     // Thymeleaf: Show login page

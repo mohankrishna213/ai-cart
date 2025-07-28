@@ -78,11 +78,36 @@
       margin-top: 20px;
       text-align: left;
     }
+    .alert {
+      padding: 12px 16px;
+      margin: 0 auto 20px;
+      width: 90%;
+      border-radius: 4px;
+      text-align: left;
+    }
+    .alert-danger {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .alert-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="register-box">
+      <div th:if="${errorMessage}"
+           class="alert alert-danger"
+           th:text="${errorMessage}">
+      </div>
+      <div th:if="${param.error}"
+           class="alert alert-warning">
+        Registration failed. Please check your details and try again.
+      </div>
       <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" alt="Tech Mahindra Logo">
       <form th:action="@{/auth/registerUser}" method="post" th:object="${user}">
         <label for="username">Username:</label>
@@ -92,12 +117,18 @@
         <input type="email" id="email" th:field="*{email}" required placeholder="Enter your email">
 
         <label for="password">Password:</label>
-        <input type="password" id="password" th:field="*{password}" required placeholder="Enter your password">
+        <input type="password" id="password" th:field="*{password}" required placeholder="Enter your password" oninput="checkPasswords()">
 
         <label for="confirmPassword">Confirm Password:</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+        <div style="position:relative; display:flex; align-items:center;">
+          <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password" oninput="checkPasswords()" style="flex:1;">
+          <button type="button" onclick="toggleConfirmPassword()" tabindex="-1" style="background:none; border:none; position:absolute; right:10px; cursor:pointer; outline:none;">
+            <span id="eyeIcon" style="font-size:1.2em; color:#888;">&#128065;</span>
+          </button>
+        </div>
 
-        <input type="submit" value="Register">
+        <div id="passwordError" style="color:#b71c1c; font-size:13px; margin-bottom:10px; display:none;"></div>
+        <input type="submit" value="Register" id="registerBtn">
       </form>
       <form th:action="@{/auth/loginPage}" method="get">
         <button type="submit" class="login-btn">Already have an account? Login here</button>
@@ -108,5 +139,33 @@
       </div>
     </div>
   </div>
+  <script>
+    function checkPasswords() {
+      var pwd = document.getElementById('password').value;
+      var cpwd = document.getElementById('confirmPassword').value;
+      var errorDiv = document.getElementById('passwordError');
+      var btn = document.getElementById('registerBtn');
+      if (pwd && cpwd && pwd !== cpwd) {
+        errorDiv.textContent = 'Password and Confirm Password do not match.';
+        errorDiv.style.display = 'block';
+        btn.disabled = true;
+      } else {
+        errorDiv.textContent = '';
+        errorDiv.style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+    function toggleConfirmPassword() {
+      var input = document.getElementById('confirmPassword');
+      var icon = document.getElementById('eyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.style.color = '#333';
+      } else {
+        input.type = 'password';
+        icon.style.color = '#888';
+      }
+    }
+  </script>
 </body>
 </html>
