@@ -77,7 +77,7 @@ public class ProductsController {
 }
 
 	@PostMapping("/admin")
-	@PreAuthorize("hasAuthority('ADMIN')")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ProductsDTO> createProduct(@RequestBody ProductsDTO productsDTO){
     Products product = toProductsEntity(productsDTO);
     Products saved = productService.addProduct(product);
@@ -93,7 +93,7 @@ public class ProductsController {
 }
 
 	@DeleteMapping("/admin/{id}")
-	@PreAuthorize("hasAuthority('ADMIN')")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
 	    productService.deleteProduct(id);
 	    return ResponseEntity.noContent().build();
