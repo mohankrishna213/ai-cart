@@ -109,6 +109,15 @@ public class Reviews {
 	public Reviews() {
 		super();
 	}
+
+	public void setProductId(long l) {
+		this.product.setId(l);
+	}
+
+	public void setUserId(long l) {
+		this.user.setId(l);
+		
+	}
 	
 	
 	

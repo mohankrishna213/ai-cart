@@ -67,6 +67,16 @@ public class Wishlist_items {
 		super();
 		
 	}
+
+	public void setUserId(long l) {
+		this.user.setId(l);
+		
+	}
+
+	public void setProductId(long l) {
+		this.product.setId(l);
+		
+	}
 	
 	
 	

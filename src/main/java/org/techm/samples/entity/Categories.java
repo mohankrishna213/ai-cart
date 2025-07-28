@@ -76,5 +76,19 @@ public class Categories {
 		super();
 		
 	}
+
+	public Categories(String name, String description) {
+		super();
+		this.name = name;
+		this.description = description;
+	}
+
+	public Categories(Long id, String name, String description) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.description = description;
+	}
+
 		
 }
