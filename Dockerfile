@@ -1,22 +1,26 @@
-# 1) Build stage: compile & package your JAR
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# ── Build Stage ───────────────────────────────────────────────────────────────
+FROM maven:3.9.2-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
-# Copy Maven wrapper, pom and download dependencies
-COPY mvnw pom.xml ./
-COPY .mvn .mvn
-RUN chmod +x mvnw \
-    && ./mvnw dependency:go-offline -B
+# Copy only the pom.xml first to leverage Docker cache for dependency download
+COPY pom.xml ./
 
-# Copy source & build
-COPY src src
-RUN ./mvnw clean package -DskipTests -B
+# Download dependencies without building
+RUN mvn dependency:go-offline -B
 
-# 2) Runtime stage: slim JRE + your fat JAR
+# Copy source code and package the application
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+# ── Runtime Stage ─────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+# Copy the fat JAR from the builder stage
 COPY --from=builder /app/target/*.jar app.jar
+
+# Expose default Spring Boot port
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Launch the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
