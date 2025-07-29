@@ -3,10 +3,56 @@
 <head>
     <title>Search Results</title>
     <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+        body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #444;
+    }
+    .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #f5f5f5;
+    }
+    .img {
+        width: 150px;
+        margin-bottom: 20px;
+    }
+    nav ul {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    nav ul li {
+        margin: 0 10px;
+        position: relative;
+    }
+    nav ul li.active a {
+        border-bottom: 2px solid #333;
+        color: #333;
+        font-weight: bold;
+    }
+    </style>
 </head>
 <body>
-    <a th:href="@{/home}">Back to Home</a>
-    <h1>Search Results for "<span th:text="${searchTerm}">term</span>"</h1>
-    <div th:replace="products/list :: productList(${products})"></div>
+    <header>
+        <div class="nav-container">
+            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <nav>
+                <ul>
+                    <li th:each="cat : ${categories}" th:classappend="${cat.id} == ${categoryId} ? 'active'">
+                        <a th:text="${cat.name}" th:href="@{'/category/' + ${cat.id}}"></a>
+                    </li>
+                </ul>
+            </nav>
+            <a th:href="@{/wishlist}">Wishlist</a>
+        </div>
+    </header>
+<!--     <h1>Search Results for "<span th:text="${searchTerm}">term</span>"</h1> -->
+    <div th:replace="products/list :: productList(products=${products})"></div>
 </body>
 </html>

@@ -76,6 +76,7 @@
             <input type="text" name="q" placeholder="Search products..." />
             <button type="submit">Search</button>
         </form>
+        <div th:fragment="productList (products)">
         <div class="products-grid">
             <div class="product-card" th:each="product : ${products}">
                 <a th:href="@{'/product/' + ${product.id}}">
@@ -84,6 +85,7 @@
                     <p th:text="'₹ ' + ${product.price}">Price</p>
                 </a>
             </div>
+        </div>
         </div>
     </main>
 </body>
