@@ -1,14 +1,15 @@
 # ── Build Stage ───────────────────────────────────────────────────────────────
-FROM maven:3.9.2-eclipse-temurin-21-alpine AS builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-# Copy only the pom.xml first to leverage Docker cache for dependency download
-COPY pom.xml ./
+# Install Maven CLI
+RUN apk add --no-cache maven
 
-# Download dependencies without building
+# Copy POM and fetch dependencies
+COPY pom.xml ./
 RUN mvn dependency:go-offline -B
 
-# Copy source code and package the application
+# Copy source and build the jar
 COPY src ./src
 RUN mvn clean package -DskipTests -B
 
@@ -16,11 +17,8 @@ RUN mvn clean package -DskipTests -B
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Copy the fat JAR from the builder stage
+# Grab the fat JAR
 COPY --from=builder /app/target/*.jar app.jar
 
-# Expose default Spring Boot port
 EXPOSE 8080
-
-# Launch the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
