@@ -20,7 +20,7 @@ import org.techm.samples.entity.User;
 @DataJpaTest
 @EntityScan("org.techm.samples.entity")
 @EnableJpaRepositories("org.techm.samples.repository")
-// optional if you want to override the default embedded test DB
+
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 public class ReviewRepositoryTest{
 
@@ -40,7 +40,7 @@ public class ReviewRepositoryTest{
       user.setRole(Role.CUSTOMER);
       em.persistAndFlush(user);
 
-      // 2) create & persist a product
+     
       Products product = new Products();
       product.setName("Widget");
       product.setDescription("A test widget");

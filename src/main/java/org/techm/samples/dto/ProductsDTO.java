@@ -9,7 +9,7 @@ public class ProductsDTO {
     private Integer stockQuantity;
     private String imageUrl;
     private boolean available;
-    // Add other fields as needed
+    
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -21,7 +21,7 @@ public class ProductsDTO {
     public void setPrice(Double price) { this.price = price; }
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
-    // Add other getters/setters as needed
+    
 	public Integer getStockQuantity() {
 		return stockQuantity;
 	}

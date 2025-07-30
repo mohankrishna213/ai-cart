@@ -31,7 +31,7 @@ public class ReviewsController {
     @Autowired
     private ProductsRepository productsRepository;
 
-    // Get all reviews for a product
+   
     @GetMapping("/product/{productId}")
     public ResponseEntity<List<ReviewsDTO>> getReviewsByProduct(@PathVariable Long productId) {
         Optional<Products> productOpt = productsRepository.findById(productId);
@@ -43,7 +43,7 @@ public class ReviewsController {
         return new ResponseEntity<>(dtoList, HttpStatus.OK);
     }
 
-    // Create a review by customer
+    
     @PostMapping(path="/product/{productId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('CUSTOMER')")
     public ResponseEntity<?> createReview(@PathVariable Long productId, @RequestBody ReviewsDTO reviewDTO) {
@@ -72,7 +72,7 @@ public class ReviewsController {
         }
     }
 
-    // Delete a review by customer or admin
+   
     @DeleteMapping("/{reviewId}")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('CUSTOMER')")
     public ResponseEntity<?> deleteReview(@PathVariable Long reviewId, Principal principal) {
@@ -86,7 +86,7 @@ public class ReviewsController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         User user = userOpt.get();
-        // Only admin or the review owner can delete
+       
         if (user.getRole().name().equals("ADMIN") || review.getUser().getId().equals(user.getId())) {
             reviewsService.deleteReview(reviewId);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

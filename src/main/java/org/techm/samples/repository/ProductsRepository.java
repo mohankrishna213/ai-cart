@@ -17,6 +17,6 @@ public interface ProductsRepository extends JpaRepository<Products,Long>{
     List<Products> findByNameContainingIgnoreCase(String keyword);
     List<Products> findByPriceBetween(double minPrice, double maxPrice);
     @Query("SELECT p FROM Products p JOIN p.reviews r GROUP BY p.id ORDER BY AVG(r.rating) DESC")
-    List<Products> findTopRatedProducts(); // assuming Reviews has a 'rating' field
+    List<Products> findTopRatedProducts(); 
     Page<Products> findAll(Pageable pageable);
 }

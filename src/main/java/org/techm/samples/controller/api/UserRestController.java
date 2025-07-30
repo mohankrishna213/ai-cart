@@ -28,20 +28,20 @@ public class UserRestController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
-    // REST endpoint (not secured)
+    
     @GetMapping("/welcome")
     public String welcome() {
         return "Welcome! This endpoint is not secure.";
     }
 
-//    // REST endpoint for registration
+
     @PostMapping("/register")
     public String addNewUser(@RequestBody User userInfo) {
         System.out.println("thsi is called");
         return service.addUser(userInfo);
     }
 
-   // REST endpoint for token generation
+  
     @PostMapping("/generateToken")
     public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
         Authentication authentication = authenticationManager.authenticate(

@@ -22,7 +22,7 @@ public class AdminViewController {
     @Autowired
     private ReviewsService reviewsService;
 
-    // Category Management
+   
     @PostMapping("/category")
     public ResponseEntity<?> addCategory(@RequestBody Categories category) {
         var saved = categoriesService.addCategory(category);
@@ -42,7 +42,7 @@ public class AdminViewController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // Product Management
+   
     @PutMapping("/product/{id}")
     public ResponseEntity<?> editProduct(@PathVariable Long id, @RequestBody Products product) {
         product.setId(id);
@@ -56,7 +56,7 @@ public class AdminViewController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // Review Management
+    
     @DeleteMapping("/review/{id}")
     public ResponseEntity<?> deleteReview(@PathVariable Long id) {
         reviewsService.deleteReview(id);

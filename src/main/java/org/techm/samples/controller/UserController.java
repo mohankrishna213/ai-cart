@@ -33,14 +33,14 @@ public class UserController {
 
     
 
-    // Thymeleaf: Show registration page
+    
     @GetMapping("/registerPage")
     public String showRegisterPage(Model model) {
         model.addAttribute("user", new User());
-        return "register"; // maps to register.html
+        return "register"; 
     }
 
-    // Thymeleaf: Handle registration form
+    
     @PostMapping("/registerUser")
     public String registerUser(@ModelAttribute("user") User user, @RequestParam("confirmPassword") String confirmPassword, Model model) {
         if (!user.getPassword().equals(confirmPassword)) {
@@ -57,14 +57,14 @@ public class UserController {
         }
     }
 
-    // Thymeleaf: Show login page
+  
     @GetMapping("/loginPage")
     public String showLoginPage(Model model) {
         model.addAttribute("authRequest", new AuthRequest());
-        return "login"; // maps to login.html
+        return "login"; 
     }
 
-    // Thymeleaf: Handle login form
+    
     @PostMapping("/loginUser")
     public String loginUser(@ModelAttribute("authRequest") AuthRequest authRequest, Model model, HttpServletRequest request) {
         Authentication authentication = authenticationManager.authenticate(

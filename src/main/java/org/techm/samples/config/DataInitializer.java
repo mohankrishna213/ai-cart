@@ -79,7 +79,7 @@ public class DataInitializer implements CommandLineRunner {
 	}
 
 	private void createSimpleProducts(List<Categories> categories) {
-		// Clothing (categoryId = 0)
+		
 		Categories clothing=categories.get(0);
 		createProduct(
 		    "Puma Mens ESS Tipping Polo T-Shirt",
@@ -202,7 +202,7 @@ public class DataInitializer implements CommandLineRunner {
 		    gadgets
 		);
 
-		// Drinkware (categoryId = 2)
+	
 		Categories drinkware=categories.get(3);
 		createProduct(
 		    "Artiart Zebra Mug",
@@ -244,7 +244,7 @@ public class DataInitializer implements CommandLineRunner {
 		    drinkware
 		);
 		
-		// Stationary (categoryId = 3)
+		
 		Categories stationary=categories.get(2);
 		createProduct(
 		    "Premium Notebook - Capri",
@@ -286,7 +286,7 @@ public class DataInitializer implements CommandLineRunner {
 		    stationary
 		);
 
-		// Bags (categoryId = 4)
+		
 		Categories bags=categories.get(4);
 		createProduct(
 		    "Uppercase JFK Hard Luggage Trolley Bag Cabin",
@@ -338,7 +338,7 @@ public class DataInitializer implements CommandLineRunner {
 		    bags
 		);
 
-		// Ergonomic (categoryId = 5)
+		
 		Categories ergonomic=categories.get(5);
 		createProduct(
 		    "PALO Orthopedic Long Back Support with Memory Foam",

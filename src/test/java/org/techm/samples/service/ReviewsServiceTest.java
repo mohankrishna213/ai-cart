@@ -96,27 +96,19 @@ public class ReviewsServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> service.deleteReview(99L));
     }
 
-	/*
-	 * @Test void testGetReviewsByProduct() { Reviews r = review();
-	 * when(repo.findAllByProduct(product())).thenReturn(List.of(r));
-	 * 
-	 * List<Reviews> list = service.getReviewsByProduct(product());
-	 * 
-	 * assertEquals(1, list.size()); }
-	 */
-    @Test
+	    @Test
     void testGetReviewsByProduct() {
       Products prod = product();
       Reviews r = review();
 
-      // stub the exact method
+      
       when(repo.findAllByProduct(prod))
         .thenReturn(List.of(r));
 
       List<Reviews> list = service.getReviewsByProduct(prod);
 
       assertEquals(1, list.size());
-      // verify the right method was invoked
+    
       verify(repo).findAllByProduct(prod);
     }
 

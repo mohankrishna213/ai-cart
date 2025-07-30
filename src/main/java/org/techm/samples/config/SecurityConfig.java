@@ -41,10 +41,9 @@ public class SecurityConfig {
         http
           .csrf(csrf -> csrf.disable())
 
-          // 1. URI Authorization by Role
+       
           .authorizeHttpRequests(auth -> auth
 
-            // Public (login, register, token gen, static assets)
             .requestMatchers(
               "/auth/generateToken",
               "/auth/registerPage",
@@ -57,12 +56,12 @@ public class SecurityConfig {
               "/api/users/**"
             ).permitAll()
 
-            // Admin UI (Thymeleaf) and Admin APIs
+            
             .requestMatchers("/products/admin/**").hasAuthority("ADMIN")
             .requestMatchers("/api/products/admin/**", "/api/categories/admin/**")
               .hasAuthority("ADMIN")
 
-            // Home and browse/search/detail/wishlist: allow both ADMIN and CUSTOMER
+           
             .requestMatchers(
               "/", "/home",
               "/category/**",
@@ -75,7 +74,7 @@ public class SecurityConfig {
               "/wishlist"
             ).hasAnyAuthority("ADMIN", "CUSTOMER")
 
-            // API: Reviews (GET any authenticated, POST by CUSTOMER, DELETE by ADMIN or CUSTOMER)
+            
             .requestMatchers(HttpMethod.GET,    "/api/reviews/product/**")
               .authenticated()
             .requestMatchers(HttpMethod.POST,   "/api/reviews/product/**")
@@ -83,20 +82,20 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/api/reviews/**")
               .hasAnyAuthority("ADMIN", "CUSTOMER")
 
-            // Everything else requires authentication
+           
             .anyRequest().authenticated()
           )
 
-          // 2. Session management: allow sessions for form-login
+          
           .sessionManagement(sess -> 
             sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
           )
 
-          // 3. JWT filter for API calls
+          
           .authenticationProvider(authenticationProvider())
           .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-          // 4. Form-based login for the UI
+          
           .formLogin(login -> login
               .loginPage("/auth/loginPage")
               .loginProcessingUrl("/auth/loginUser")
@@ -104,7 +103,7 @@ public class SecurityConfig {
               .permitAll()
           )
 
-          // 5. Logout
+         
           .logout(logout -> logout
               .logoutUrl("/logout")
               .logoutSuccessUrl("/auth/loginPage")

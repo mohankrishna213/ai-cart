@@ -33,13 +33,13 @@ class CategoriesControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
-    @MockBean                                 // <-- make Spring inject this mock
+    @MockBean                                
     private CategoriesServiceImpl categoriesService;
     
     @MockBean
-    private JwtService jwtService;      // satisfies the JwtAuthFilter
+    private JwtService jwtService;      
 
-    // if your filter needs more beans (e.g. UserDetailsService), mock them here too:
+    
     @MockBean
     private UserDetailsService uds;
 

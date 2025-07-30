@@ -51,7 +51,7 @@ public class UIController {
     @Autowired
     private ProductsController apiController;
 
-    // Home page after login
+   
     @GetMapping({"/", "/home"})
     public String home(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -71,7 +71,7 @@ public class UIController {
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
-        // Add isAdmin attribute for Thymeleaf
+       
         boolean isAdmin = false;
         if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
             isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
@@ -82,13 +82,13 @@ public class UIController {
 
 
 
-    // Logout (Spring Security will handle actual logout, this is just a redirect)
+   
     @GetMapping("/logout-success")
     public String logoutSuccess() {
         return "redirect:/auth/loginPage";
     }
 
-    // Show wishlist page for customer
+    
     @GetMapping("/wishlist")
     public String wishlist(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -105,7 +105,7 @@ public class UIController {
         return "wishlist";
     }
 
-    // Show products by category
+   
     @GetMapping("/category/{categoryId}")
     public String productsByCategory(@org.springframework.web.bind.annotation.PathVariable Long categoryId, Model model) {
         model.addAttribute("categories", categoriesService.getAllCategories());
@@ -121,14 +121,14 @@ public class UIController {
         return "products/category";
     }
 
-    // Show product details page
+ 
     @GetMapping("/product/{productId}")
     public String productDetail(@org.springframework.web.bind.annotation.PathVariable Long productId, Model model) {
         var product = productService.getProductById(productId);
         model.addAttribute("product", product);
-        // Add reviews for this product
+    
         model.addAttribute("reviews", reviewsService.getReviewsByProduct(product));
-        // Add wishlist status for this user
+       
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         User user = userInfoRepository.findByEmail(email).orElse(null);
@@ -145,14 +145,14 @@ public class UIController {
         return "products/detail";
     }
 
-    // Show all products (with filters)
+    
     @GetMapping("/products")
     public String allProducts(Model model) {
         model.addAttribute("products", productService.getAllProducts());
         return "products/list";
     }
 
-    // Filter products by price range
+
     @GetMapping("/products/price-range")
     public String productsByPriceRange(@org.springframework.web.bind.annotation.RequestParam double minPrice,
                                        @org.springframework.web.bind.annotation.RequestParam double maxPrice,
@@ -161,14 +161,14 @@ public class UIController {
         return "products/list";
     }
 
-    // Filter top rated products
+    
     @GetMapping("/products/top-rated")
     public String topRatedProducts(Model model) {
         model.addAttribute("products", productService.getTopRatedProducts());
         return "products/list";
     }
 
-    // Search products by name
+    
     @GetMapping("/products/search")
     public String searchProducts(@org.springframework.web.bind.annotation.RequestParam String q, Model model) {
     	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -182,7 +182,7 @@ public class UIController {
     }
     
     @PostMapping("products/wishlist/add/{productId}")
-//	@PreAuthorize("hasAuthority('CUSTOMER')")
+
     public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId, Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
@@ -216,12 +216,12 @@ public class UIController {
         @PathVariable Long productId,
         Principal principal
     ) {
-        // Delegates to your @DeleteMapping in WishlistApiController
+        
         apiController.removeProductFromWishlist(productId, principal);
         return "redirect:/wishlist";
     }
 
-    // --- Admin Category Management ---
+   
     @PostMapping("/admin/category/add")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> addCategory(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.entity.Categories category) {
@@ -243,7 +243,7 @@ public class UIController {
         return ResponseEntity.ok().build();
     }
 
-    // --- Admin Product Management ---
+    
     @PostMapping("/admin/product/add")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> addProduct(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.dto.ProductsDTO dto) {

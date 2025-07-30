@@ -71,19 +71,19 @@ public class CategoryServiceTest {
 
   @Test
   void deleteCategory_callsRepository() {
-    // Arrange: stub the lookup to succeed
+    
     Categories toDelete = new Categories("X","desc");
     toDelete.setId(7L);
     when(categoryRepository.findById(7L))
       .thenReturn(Optional.of(toDelete));
 
-    // Arrange: no-op delete
+    
     doNothing().when(categoryRepository).deleteById(7L);
 
-    // Act
+   
     categoryService.deleteCategory(7L);
 
-    // Assert
+    
     verify(categoryRepository).deleteById(7L);
   }
 

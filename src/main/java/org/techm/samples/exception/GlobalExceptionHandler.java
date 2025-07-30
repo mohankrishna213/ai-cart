@@ -13,7 +13,7 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 400 – Validation failures
+    
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
@@ -23,14 +23,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
-    // 404 – Resource not found
+   
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<String> handleResourceNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                              .body(ex.getMessage());
     }
 
-    // 409 – Duplicate operations
+    
     @ExceptionHandler({
         DuplicateWishlistException.class,
         DuplicateReviewException.class,
@@ -41,14 +41,14 @@ public class GlobalExceptionHandler {
                              .body(ex.getMessage());
     }
 
-    // 401 – Bad credentials (UI or API can catch this)
+    
     @ExceptionHandler({InvalidCredentialsException.class, UsernameNotFoundException.class})
     public ResponseEntity<String> handleAuthErrors(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                              .body(ex.getMessage());
     }
 
-    // 500 – Fallback for all other exceptions
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAllExceptions(Exception ex, WebRequest req) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
