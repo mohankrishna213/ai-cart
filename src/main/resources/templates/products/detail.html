@@ -222,9 +222,12 @@
             <p th:text="'Available: ' + (${product.available} ? 'Yes' : 'No')"></p>
             <div class="price-section">
                 <p class="total-price" th:text="'₹ ' + ${product.price}">₹ 0.00</p>
+                <div id="wishlistError" style="color: #e25555; margin-bottom: 10px; display: none;">
+				</div>
                 <form th:action="@{'/products/wishlist/add/' + ${product.id}}" method="post" id="addToWishlistForm">
                     <button th:if="${!isAdmin}" type="submit" class="add-to-cart" id="addToWishlistBtn">🛒 Add To WishList</button>
                 </form>
+                
             </div>
             <!-- Admin: Show all reviews for this product -->
             <div style="margin-top:30px;">
@@ -236,7 +239,7 @@
                     <div style="margin-top:5px;">
                         <span th:text="${review.title}"></span>
                         <p th:text="${review.content}"></p>
-                        <button th:if="${isAdmin}" type="button" th:onclick="'removeReview(' + ${review.id} + ')'" style="color:#fff; background:#e25555; border:none; padding:6px 12px; border-radius:4px; margin-top:8px; cursor:pointer;">Remove Review</button>
+                        <button type="button" th:onclick="'removeReview(' + ${review.id} + ')'" style="color:#fff; background:#e25555; border:none; padding:6px 12px; border-radius:4px; margin-top:8px; cursor:pointer;">Remove Review</button>
                     </div>
                 </div>
             </div>
@@ -254,6 +257,8 @@
                     <label for="ratingInput" style="margin-right:10px; font-weight:500;">Rating:</label>
                     <input type="number" name="rating" id="ratingInput" min="0.5" max="5" step="0.5" value="5" style="width:70px; font-size:1.1em;" required />
                 </div>
+                <div id="reviewError" style="color: #e25555; margin-bottom: 10px; display: none;">
+				</div>
                 <button type="submit">Submit Review</button>
             </form>
         </div>
@@ -265,15 +270,40 @@
                 .then(r => r.json()).then(data => { location.reload(); });
         }
     }
-    document.getElementById('addToWishlistForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        fetch(this.action, {method: 'POST'})
-            .then(res => {
-                if(res.ok) {
-                    document.getElementById('reviewPopup').style.display = 'flex';
-                }
+    const wishlistError = document.getElementById('wishlistError');
+    const addToWishlistForm = document.getElementById('addToWishlistForm');
+
+    addToWishlistForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      wishlistError.style.display = 'none';
+      wishlistError.textContent = '';
+
+      fetch(this.action, { method: 'POST' })
+        .then(res => {
+          if (res.status === 208) {
+            // duplicate – show the backend’s message
+            return res.text().then(msg => {
+              wishlistError.textContent = 'Product is already in your wish-list';
+              wishlistError.style.display = 'block';
             });
+          }
+          if (res.ok) {
+            // success – show the review popup
+            document.getElementById('reviewPopup').style.display = 'flex';
+          } else {
+            // other errors
+            console.error('Wishlist error:', res.status);
+            wishlistError.textContent = 'Could not add to wishlist. Please try again.';
+            wishlistError.style.display = 'block';
+          }
+        })
+        .catch(err => {
+          console.error('Network error:', err);
+          wishlistError.textContent = 'Network error. Check your connection.';
+          wishlistError.style.display = 'block';
+        });
     });
+
     function closePopup() {
         document.getElementById('reviewPopup').style.display = 'none';
     }
@@ -300,19 +330,12 @@
           closePopup();
           location.reload();
         } else {
+          document.getElementById('reviewError').textContent = 'You have already reviewed this product';
+          document.getElementById('reviewError').style.display = 'block';
           console.error('Review failed', res.status);
         }
       })
       .catch(console.error);
-    });
-
-    function updateLovePointer(val) {
-        document.getElementById('ratingValue').textContent = val;
-        let love = document.getElementById('lovePointer');
-        love.style.marginLeft = (val * 30) + 'px';
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-        updateLovePointer(document.getElementById('ratingSlider').value);
     });
     </script>
 </body>

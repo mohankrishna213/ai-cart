@@ -10,6 +10,10 @@
         padding: 0;
         color: #444;
     }
+    a {
+        text-decoration: none;
+        color: #444;
+    }
     .nav-container {
         display: flex;
         justify-content: space-between;
@@ -17,41 +21,111 @@
         padding: 10px 20px;
         background-color: #f5f5f5;
     }
+
+    .logo {
+        font-weight: bold;
+        font-size: 1.5em;
+        color: #333;
+    }
+
     .img {
         width: 150px;
         margin-bottom: 20px;
     }
+
+    .search-bar input {
+        padding: 5px;
+        width: 200px;
+    }
+
     nav ul {
         display: flex;
         list-style: none;
         padding: 0;
         margin: 0;
     }
+
     nav ul li {
         margin: 0 10px;
+    }
+
+    .top-links {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .account-dropdown {
         position: relative;
     }
-    nav ul li.active a {
-        border-bottom: 2px solid #333;
-        color: #333;
-        font-weight: bold;
+
+    .account-dropdown button {
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        padding: 10px;
+    }
+
+    .account-dropdown:hover .dropdown-content {
+        display: block;
+    }
+    .products-section {
+        padding: 20px;
+        background-color: #fafafa;
     }
     </style>
 </head>
 <body>
+    <!-- Header Section -->
     <header>
         <div class="nav-container">
-            <img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo">
+            <a th:href="@{/home}"><img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo"></a>
+            <div class="search-bar">
+                <form th:action="@{/products/search}" method="get">
+                    <input type="text" name="q" placeholder="Search products..." />
+                    <button type="submit">🔍</button>
+                </form>
+            </div>
             <nav>
                 <ul>
-                    <li th:each="cat : ${categories}" th:classappend="${cat.id} == ${categoryId} ? 'active'">
-                        <a th:text="${cat.name}" th:href="@{'/category/' + ${cat.id}}"></a>
+                    <li th:each="category : ${categories}">
+                        <a th:text="${category.name}" th:href="@{'/category/' + ${category.id}}"></a>
                     </li>
                 </ul>
             </nav>
-            <a th:href="@{/wishlist}">Wishlist</a>
+            <div class="top-links">
+    <a th:if="${!isAdmin}" th:href="@{/wishlist}">Wishlist</a>
+
+    <!-- Show login if user not logged in -->
+    <div th:if="${remoteUser == null}">
+        <a th:href="@{/auth/loginPage}">
+            <button>Login</button>
+        </a>
+    </div>
+
+    <!-- Show account dropdown if user is logged in -->
+    <div class="account-dropdown" th:if="${remoteUser != null}">
+        <button>Hello, friend ⌄</button>
+        <div class="dropdown-content">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+</div>
+
         </div>
     </header>
+    <main class="products-section">
 <!--     <h1>Search Results for "<span th:text="${searchTerm}">term</span>"</h1> -->
     <div th:replace="products/list :: productList(products=${products})"></div>
 </body>

@@ -25,6 +25,7 @@ import org.techm.samples.dto.WishlistItemsDTO;
 import org.techm.samples.entity.Products;
 import org.techm.samples.entity.User;
 import org.techm.samples.entity.Wishlist_items;
+import org.techm.samples.exception.DuplicateWishlistException;
 import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.repository.UserInfoRepository;
 import org.techm.samples.service.categories.CategoriesService;
@@ -53,7 +54,7 @@ public class UIController {
     // Home page after login
     @GetMapping({"/", "/home"})
     public String home(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
                        Model model,
@@ -96,6 +97,11 @@ public class UIController {
         if (user != null) {
             model.addAttribute("wishlistItems", wishlistService.getWishlistByUser(user));
         }
+        boolean isAdmin = false;
+        if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
+            isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        }
+        model.addAttribute("isAdmin", isAdmin);
         return "wishlist";
     }
 
@@ -165,13 +171,19 @@ public class UIController {
     // Search products by name
     @GetMapping("/products/search")
     public String searchProducts(@org.springframework.web.bind.annotation.RequestParam String q, Model model) {
+    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    	boolean isAdmin = false;
+        if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
+            isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        }
+        model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("products", productService.searchProductsByName(q));
         return "products/search";
     }
     
     @PostMapping("products/wishlist/add/{productId}")
 //	@PreAuthorize("hasAuthority('CUSTOMER')")
-    public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId) {
+    public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId, Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         System.out.println(email);
@@ -184,14 +196,19 @@ public class UIController {
         if (productOpt.isEmpty()) {
             throw new ResourceNotFoundException("Product not found with id: " + productId);
         }
-        Wishlist_items item = wishlistService.addToWishlist(userOpt.get(), productOpt.get());
-        WishlistItemsDTO dto = new WishlistItemsDTO();
-        dto.setId(item.getId());
-        dto.setUserId(item.getUser().getId());
-        dto.setProductId(item.getProduct().getId());
-        dto.setProductName(item.getProduct().getName());
-        dto.setProductImage(item.getProduct().getImageUrl());
-        return new ResponseEntity<>(dto, HttpStatus.OK);
+        try {
+	        Wishlist_items item = wishlistService.addToWishlist(userOpt.get(), productOpt.get());
+	        WishlistItemsDTO dto = new WishlistItemsDTO();
+	        dto.setId(item.getId());
+	        dto.setUserId(item.getUser().getId());
+	        dto.setProductId(item.getProduct().getId());
+	        dto.setProductName(item.getProduct().getName());
+	        dto.setProductImage(item.getProduct().getImageUrl());
+	        return new ResponseEntity<>(dto, HttpStatus.OK);
+        }
+        catch(DuplicateWishlistException e) {
+        	return new ResponseEntity<>(e.getMessage(),HttpStatus.ALREADY_REPORTED);
+        }
     }
     
     @PostMapping("/wishlist/remove/{productId}")
