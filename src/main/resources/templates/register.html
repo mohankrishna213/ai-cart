@@ -117,7 +117,8 @@
         <input type="email" id="email" th:field="*{email}" required placeholder="Enter your email">
 
         <label for="password">Password:</label>
-        <input type="password" id="password" th:field="*{password}" required placeholder="Enter your password" oninput="checkPasswords()">
+        <input type="password" id="password" th:field="*{password}" required placeholder="Enter your password" minlength="4" maxlength="12"
+       oninput="checkPasswords()">
 
         <label for="confirmPassword">Confirm Password:</label>
         <div style="position:relative; display:flex; align-items:center;">
@@ -140,32 +141,31 @@
     </div>
   </div>
   <script>
-    function checkPasswords() {
-      var pwd = document.getElementById('password').value;
-      var cpwd = document.getElementById('confirmPassword').value;
-      var errorDiv = document.getElementById('passwordError');
-      var btn = document.getElementById('registerBtn');
-      if (pwd && cpwd && pwd !== cpwd) {
-        errorDiv.textContent = 'Password and Confirm Password do not match.';
-        errorDiv.style.display = 'block';
-        btn.disabled = true;
-      } else {
-        errorDiv.textContent = '';
-        errorDiv.style.display = 'none';
-        btn.disabled = false;
-      }
+  function checkPasswords() {
+    const pwd = document.getElementById('password').value;
+    const cpwd = document.getElementById('confirmPassword').value;
+    const errorDiv = document.getElementById('passwordError');
+    const btn = document.getElementById('registerBtn');
+
+    let errorMessage = '';
+
+    if (pwd.length < 4 || pwd.length > 12) {
+      errorMessage = 'Password must be between 4 and 12 characters.';
+    } else if (pwd !== cpwd) {
+      errorMessage = 'Password and Confirm Password do not match.';
     }
-    function toggleConfirmPassword() {
-      var input = document.getElementById('confirmPassword');
-      var icon = document.getElementById('eyeIcon');
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.style.color = '#333';
-      } else {
-        input.type = 'password';
-        icon.style.color = '#888';
-      }
+
+    if (errorMessage) {
+      errorDiv.textContent = errorMessage;
+      errorDiv.style.display = 'block';
+      btn.disabled = true;
+    } else {
+      errorDiv.textContent = '';
+      errorDiv.style.display = 'none';
+      btn.disabled = false;
     }
-  </script>
+  }
+</script>
+
 </body>
 </html>
