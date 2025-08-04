@@ -2,131 +2,256 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Search Results</title>
-    <link rel="stylesheet" href="/css/styles.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        color: #444;
-    }
-    a {
-        text-decoration: none;
-        color: #444;
-    }
-    .nav-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 20px;
-        background-color: #f5f5f5;
-    }
-
-    .logo {
-        font-weight: bold;
-        font-size: 1.5em;
-        color: #333;
-    }
-
-    .img {
-        width: 150px;
-        margin-bottom: 20px;
-    }
-
-    .search-bar input {
-        padding: 5px;
-        width: 200px;
-    }
-
-    nav ul {
-        display: flex;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    nav ul li {
-        margin: 0 10px;
-    }
-
-    .top-links {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .account-dropdown {
-        position: relative;
-    }
-
-    .account-dropdown button {
-        background: none;
-        border: none;
-        cursor: pointer;
-    }
-
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background-color: white;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        padding: 10px;
-    }
-
-    .account-dropdown:hover .dropdown-content {
-        display: block;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+	    body {
+	        font-family: Nunito, sans-serif;
+	        margin: 0;
+	        padding: 0;
+	        color: #444;
+	    }
+	    a {
+	        text-decoration: none;
+	        color: #444;
+	    }
+	    .icon {
+	      font-family: "Font Awesome 6 Free";
+	      font-weight: 200;
+	    }
+	    .user::before {
+	      content: "\f007";
+	      margin-right: 8px;
+	    }
+	    .nav-container {
+	        display: flex;
+	        justify-content: space-between;
+	        align-items: center;
+	        padding: 10px 20px;
+	        background-color: #ffffff;
+	    }
+	
+	    .logo {
+	        font-weight: bold;
+	        font-size: 1.5em;
+	        color: #333;
+	    }
+	
+	    .img {
+	        width: 150px;
+	        margin-bottom: 20px;
+	    }
+	
+		.search-bar {
+		  width: 490px;
+		  margin-top:10px;
+		  height:60px;
+		  margin-left: 200px;
+	  	  margin-right: auto;
+		  
+		}
+		
+		.search-bar input[type="text"] {
+		  width: 100%;
+		  height: 45px;
+		  padding: 0 20px;
+		  font-size: 1rem;
+		  border: 1px solid #808080;
+		  outline: none;
+		  transition: border 0.35s ease, color 0.35s ease;
+		  border-radius:30px;
+		}
+		
+		.search-bar input[type="text"]:focus {
+		  border: 1px solid #808080;
+		  color: #808080;
+		}
+		
+		.search-bar input[type="text"]::placeholder {
+		  transition: opacity 0.45s ease;
+		}
+		
+		.search-bar input[type="text"]:focus::placeholder {
+		  opacity: 0;
+		}
+		
+		.search-bar button {
+		  position: relative;
+		  float: right;
+		  height: 45px;
+		  padding: 0 20px;
+		  font-size: 1.2rem;
+		  background: none;
+		  border: none;
+		  cursor: pointer;
+		}
+	
+	
+	    nav ul {
+	        display: flex;
+	        list-style: none;
+	        padding: 0;
+	        margin: 0;
+	    }
+	
+	    nav ul li {
+	        margin: 0 10px;
+	    }
+	
+	    .top-links {
+	        display: flex;
+	        gap: 15px;
+	        align-items: center;
+	    }
+	
+	    .account-dropdown {
+	        position: relative;
+	    }
+	
+	    .account-dropdown button {
+	        background: none;
+	        border: none;
+	        cursor: pointer;
+	    }
+	
+	    .dropdown-content {
+	        display: none;
+	        position: absolute;
+	        top: 100%;
+	        right: 0;
+	        background-color: white;
+	        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+	        padding: 10px;
+	    }
+	
+	    .account-dropdown:hover .dropdown-content {
+	        display: block;
+	    }
     .products-section {
         padding: 20px;
         background-color: #fafafa;
+    }
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    .product-card {
+        border: 1px solid #ddd;
+        padding: 15px;
+        text-align: center;
+        background-color: white;
+    }
+    .product-card img {
+        width: 100%;
+        height: auto;
     }
     </style>
 </head>
 <body>
     <!-- Header Section -->
-    <header>
-        <div class="nav-container">
-            <a th:href="@{/home}"><img src="https://deq64r0ss2hgl.cloudfront.net/images/websitelogos/techmlsa_site_logo.jpg?v=8787" class="img" alt="Tech Mahindra Logo"></a>
-            <div class="search-bar">
-                <form th:action="@{/products/search}" method="get">
-                    <input type="text" name="q" placeholder="Search products..." />
-                    <button type="submit">🔍</button>
-                </form>
-            </div>
-            <nav>
-                <ul>
-                    <li th:each="category : ${categories}">
-                        <a th:text="${category.name}" th:href="@{'/category/' + ${category.id}}"></a>
-                    </li>
-                </ul>
-            </nav>
-            <div class="top-links">
-    <a th:if="${!isAdmin}" th:href="@{/wishlist}">Wishlist</a>
-
-    <!-- Show login if user not logged in -->
-    <div th:if="${remoteUser == null}">
-        <a th:href="@{/auth/loginPage}">
-            <button>Login</button>
-        </a>
-    </div>
-
-    <!-- Show account dropdown if user is logged in -->
-    <div class="account-dropdown" th:if="${remoteUser != null}">
-        <button>Hello, friend ⌄</button>
-        <div class="dropdown-content">
-            <form th:action="@{/logout}" method="post">
-                <button type="submit">Logout</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-        </div>
-    </header>
+    <div th:replace="fragments/header :: header"></div>
     <main class="products-section">
-<!--     <h1>Search Results for "<span th:text="${searchTerm}">term</span>"</h1> -->
-    <div th:replace="products/list :: productList(products=${products})"></div>
+
+        <div class="products-grid">
+            <div class="product-card" th:each="product : ${products}">
+                <a th:href="@{'/product/' + ${product.id}}">
+                    <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+                    <h3 th:text="${product.name}">Product Name</h3>
+                    <p th:text="'₹ ' + ${product.price}">Price</p>
+                </a>
+                <!-- Admin Product Controls -->
+                <div th:if="${isAdmin}" style="margin-top:10px;">
+                    <button
+                      th:attr="data-id=${product.id},data-name=${product.name},data-price=${product.price},data-imageurl=${product.imageUrl},data-description=${product.description},data-available=${product.available},data-stockquantity=${product.stockQuantity}"
+                      onclick="editProductFromData(this)">Edit</button>
+                    <button th:onclick="'deleteProduct(' + ${product.id} + ')'">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Add Product Button -->
+        <div th:if="${isAdmin}" style="margin: 20px 0; text-align: right;">
+            <button onclick="openAddProductModal()">Add Product</button>
+        </div>
+
+    <!-- Product Modal Popup -->
+    <div id="productModal" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%,0); background:#fff; border:1px solid #ccc; padding:20px; z-index:100;">
+        <form id="productForm">
+            <input type="hidden" id="prodId" name="id" />
+            <input type="hidden" id="prodCategoryId" name="categoryId" th:value="${categoryId}" />
+            <label>Name: <input type="text" id="prodName" name="name" required /></label><br><br>
+            <label>Description: <textarea id="prodDesc" name="description" required></textarea></label><br><br>
+            <label>Price: <input type="number" id="prodPrice" name="price" required step="0.01" min="0" /></label><br><br>
+            <label>Available: <input type="checkbox" id="prodAvailable" name="available" /></label><br><br>
+            <label>Stock Quantity: <input type="number" id="prodStock" name="stockQuantity" min="0" /></label><br><br>
+            <label>Image URL: <input type="text" id="prodImage" name="imageUrl" required /></label><br><br>
+            <button type="submit">Save</button>
+            <button type="button" onclick="closeProductModal()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+    function openAddProductModal() {
+        document.getElementById('prodId').value = '';
+        document.getElementById('prodName').value = '';
+        document.getElementById('prodDesc').value = '';
+        document.getElementById('prodPrice').value = '';
+        document.getElementById('prodAvailable').checked = true;
+        document.getElementById('prodStock').value = '';
+        document.getElementById('prodImage').value = '';
+        document.getElementById('productModal').style.display = 'block';
+    }
+    function openEditProductModal(id, name, price, imageUrl, description, available, stockQuantity) {
+        document.getElementById('prodId').value = id;
+        document.getElementById('prodName').value = name;
+        document.getElementById('prodDesc').value = description;
+        document.getElementById('prodPrice').value = price;
+        document.getElementById('prodAvailable').checked = available === true || available === 'true';
+        document.getElementById('prodStock').value = stockQuantity;
+        document.getElementById('prodImage').value = imageUrl;
+        document.getElementById('productModal').style.display = 'block';
+    }
+    function editProductFromData(btn) {
+        openEditProductModal(
+            btn.getAttribute('data-id'),
+            btn.getAttribute('data-name'),
+            btn.getAttribute('data-price'),
+            btn.getAttribute('data-imageurl'),
+            btn.getAttribute('data-description'),
+            btn.getAttribute('data-available'),
+            btn.getAttribute('data-stockquantity')
+        );
+    }
+    function closeProductModal() {
+        document.getElementById('productModal').style.display = 'none';
+    }
+    document.getElementById('productForm').onsubmit = function(e) {
+        e.preventDefault();
+        var id = document.getElementById('prodId').value;
+        var name = document.getElementById('prodName').value;
+        var description = document.getElementById('prodDesc').value;
+        var price = document.getElementById('prodPrice').value;
+        var available = document.getElementById('prodAvailable').checked;
+        var stockQuantity = document.getElementById('prodStock').value;
+        var imageUrl = document.getElementById('prodImage').value;
+        var categoryId = document.getElementById('prodCategoryId').value;
+        var url = id ? '/admin/product/edit' : '/admin/product/add';
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, name, description, price, available, stockQuantity, imageUrl, categoryId })
+        }).then(r => r.json()).then(data => {
+            location.reload();
+        });
+    };
+    function deleteProduct(id) {
+        if(confirm('Delete this product?')) {
+            fetch('/admin/product/delete/' + id, { method: 'DELETE' })
+                .then(r => r.json()).then(data => { location.reload(); });
+        }
+    }
+    </script>
+    </main>
 </body>
 </html>

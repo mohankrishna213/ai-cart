@@ -30,7 +30,9 @@ public class UserInfoDetails implements UserDetails {
     public String getUsername() {
         return user.getEmail(); 
     }
-
+    public Long getUserId() {
+        return this.user.getId();
+    }
     @Override
     public boolean isAccountNonExpired() {
         return true;
