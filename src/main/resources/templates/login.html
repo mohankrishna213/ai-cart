@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Tech Mahindra Brand Store – Login</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <style>
     body {
       margin: 0;
@@ -89,6 +90,7 @@
       color: #856404;
       border: 1px solid #ffeeba;
     }
+    
   </style>
 </head>
 <body>
@@ -137,6 +139,14 @@
           Don't have an account? Register one
         </button>
       </form>
+      <div class="oauth">
+      <div style="margin-top:10px">OR</div>
+	      <div class="oauth-login">
+			  <button><a th:href="@{/oauth2/authorization/google}" style="text-decoration: none; color: #fff;">
+			    <i class="fab fa-google"></i>    Login with Google
+			  </a></button>
+		  </div>
+	  </div>
 
       <!-- Disclaimer -->
       <div class="disclaimer">

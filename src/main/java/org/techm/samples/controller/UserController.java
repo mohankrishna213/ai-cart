@@ -31,9 +31,6 @@ public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    
-
-    
     @GetMapping("/registerPage")
     public String showRegisterPage(Model model) {
         model.addAttribute("user", new User());
