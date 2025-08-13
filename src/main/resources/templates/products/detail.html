@@ -436,12 +436,12 @@
                 body: JSON.stringify(payload)
             })
             .then(res => {
-                if (res.ok) {
+                if (res.status === 201) {
                     closePopup();
                     location.reload();
                 } else {
                     const errDiv = document.getElementById('reviewError');
-                    errDiv.textContent = 'You have already reviewed this product';
+                    errDiv.textContent = 'You have already reviewed me this product';
                     errDiv.style.display = 'block';
                 }
             })

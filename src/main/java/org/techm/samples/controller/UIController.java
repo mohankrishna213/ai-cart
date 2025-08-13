@@ -2,7 +2,6 @@ package org.techm.samples.controller;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +15,8 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -132,7 +133,7 @@ public class UIController {
     @GetMapping("/wishlist")
     public String wishlist(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+        String email = resolveEmail();
         User user = userInfoRepository.findByEmail(email).orElse(null);
         if (user != null) {
             model.addAttribute("wishlistItems", wishlistService.getWishlistByUser(user));
@@ -163,31 +164,61 @@ public class UIController {
 
  
     @GetMapping("/product/{productId}")
-    public String productDetail(@org.springframework.web.bind.annotation.PathVariable Long productId, Model model) {
+    public String productDetail(@PathVariable Long productId, Model model) {
+        
+        // Fetch product and its reviews
         var product = productService.getProductById(productId);
         model.addAttribute("product", product);
-    
         model.addAttribute("reviews", reviewsService.getReviewsByProduct(product));
-       
+        
+        // Determine authenticated user’s email
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        User user = userInfoRepository.findByEmail(email).orElse(null);
+        String email = null;
+        
+        if (auth != null && auth.isAuthenticated()
+            && !(auth instanceof AnonymousAuthenticationToken)) {
+            
+            Object principal = auth.getPrincipal();
+            if (principal instanceof UserInfoDetails) {
+                email = ((UserInfoDetails) principal).getUsername();
+            }
+            else if (principal instanceof OidcUser) {
+                email = ((OidcUser) principal).getAttribute("email");
+            }
+            else {
+                email = auth.getName();
+            }
+        }
+        
+        User user = (email != null)
+            ? userInfoRepository.findByEmail(email).orElse(null)
+            : null;
+        
         boolean inWishlist = false;
         if (user != null) {
-            inWishlist = wishlistService.getWishlistByUser(user).stream().anyMatch(w -> w.getProduct().getId().equals(product.getId()));
+            inWishlist = wishlistService
+                .getWishlistByUser(user)
+                .stream()
+                .anyMatch(w -> w.getProduct().getId().equals(productId));
         }
         model.addAttribute("inWishlist", inWishlist);
+        
+
         boolean isAdmin = false;
-        if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
-            isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        if (auth != null && auth.isAuthenticated()) {
+            isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
         }
         model.addAttribute("isAdmin", isAdmin);
-        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
-        	UserInfoDetails userDetails = (UserInfoDetails) auth.getPrincipal();
-            model.addAttribute("currentUserId", userDetails.getUserId());
+        
+
+        if (user != null) {
+            model.addAttribute("currentUserId", user.getId());
         }
+        
         return "products/detail";
     }
+
 
     
     @GetMapping("/products")
@@ -226,33 +257,60 @@ public class UIController {
     }
     
     @PostMapping("products/wishlist/add/{productId}")
-
     public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId, Model model) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        System.out.println(email);
-        Optional<User> userOpt = userInfoRepository.findByEmail(email);
-        System.out.println(userOpt.toString());
-        Optional<Products> productOpt = productService.getProductByIdOptional(productId);
-        if (userOpt.isEmpty()) {
-            throw new ResourceNotFoundException("User not found: " + email);
+    	String email = resolveEmail();
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        if (productOpt.isEmpty()) {
-            throw new ResourceNotFoundException("Product not found with id: " + productId);
-        }
+
+        // 2) Lookup user and product
+        User user = userInfoRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+
+        Products product = productService.getProductByIdOptional(productId)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
+
+        // 3) Add to wishlist
         try {
-	        Wishlist_items item = wishlistService.addToWishlist(userOpt.get(), productOpt.get());
-	        WishlistItemsDTO dto = new WishlistItemsDTO();
-	        dto.setId(item.getId());
-	        dto.setUserId(item.getUser().getId());
-	        dto.setProductId(item.getProduct().getId());
-	        dto.setProductName(item.getProduct().getName());
-	        dto.setProductImage(item.getProduct().getImageUrl());
-	        return new ResponseEntity<>(dto, HttpStatus.OK);
+            Wishlist_items item = wishlistService.addToWishlist(user, product);
+
+            // 4) Map to DTO
+            WishlistItemsDTO dto = new WishlistItemsDTO();
+            dto.setId(item.getId());
+            dto.setUserId(user.getId());
+            dto.setProductId(product.getId());
+            dto.setProductName(product.getName());
+            dto.setProductImage(product.getImageUrl());
+
+            return ResponseEntity.ok(dto);
         }
-        catch(DuplicateWishlistException e) {
-        	return new ResponseEntity<>(e.getMessage(),HttpStatus.ALREADY_REPORTED);
+        catch (DuplicateWishlistException ex) {
+            // Already in wishlist
+            return ResponseEntity.status(HttpStatus.ALREADY_REPORTED)
+                                 .body(ex.getMessage());
         }
+    }
+
+    private String resolveEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null
+            || !auth.isAuthenticated()
+            || auth instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+
+        Object principal = auth.getPrincipal();
+        if (principal instanceof UserInfoDetails) {
+            return ((UserInfoDetails) principal).getUsername();
+        }
+        if (principal instanceof OidcUser) {
+            return ((OidcUser) principal).getAttribute("email");
+        }
+        if (principal instanceof OAuth2User) {
+            return ((OAuth2User) principal).getAttribute("email");
+        }
+        // fallback to name()
+        return auth.getName();
     }
     
     @PostMapping("/wishlist/remove/{productId}")

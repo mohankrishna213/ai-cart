@@ -12,6 +12,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +33,7 @@ import org.techm.samples.entity.User;
 import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.repository.UserInfoRepository;
 import org.techm.samples.repository.WishlistItemsRepository;
+import org.techm.samples.service.auth.UserInfoDetails;
 import org.techm.samples.service.products.ProductService;
 import org.techm.samples.service.products.WishlistService;
 
@@ -123,7 +129,7 @@ public class ProductsController {
 	@DeleteMapping("/wishlist/remove/{productId}")
 	@PreAuthorize("hasAuthority('CUSTOMER')")
 	public ResponseEntity<?> removeProductFromWishlist(@PathVariable Long productId, Principal principal) {
-	    Optional<User> userOpt = userInfoRepository.findByEmail(principal.getName());
+	    Optional<User> userOpt = userInfoRepository.findByEmail(resolveEmail());
 	    Optional<Products> productOpt = productService.getProductByIdOptional(productId);
 	    if (userOpt.isEmpty()) {
 	        throw new ResourceNotFoundException("User not found: " + principal.getName());
@@ -134,6 +140,27 @@ public class ProductsController {
 	    wishlistService.removeFromWishlist(userOpt.get(), productOpt.get());
 	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
+	
+	private String resolveEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null
+            || !auth.isAuthenticated()
+            || auth instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+
+        Object principal = auth.getPrincipal();
+        if (principal instanceof UserInfoDetails) {
+            return ((UserInfoDetails) principal).getUsername();
+        }
+        if (principal instanceof OidcUser) {
+            return ((OidcUser) principal).getAttribute("email");
+        }
+        if (principal instanceof OAuth2User) {
+            return ((OAuth2User) principal).getAttribute("email");
+        }
+        return auth.getName();
+    }
 
 	@GetMapping("/category/{categoryId}")
 	public ResponseEntity<List<ProductsDTO>> getProductsByCategory(@PathVariable Long categoryId) {

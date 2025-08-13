@@ -17,14 +17,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.techm.samples.filter.JwtAuthFilter;
-import org.techm.samples.repository.UserInfoRepository;
-import org.techm.samples.config.OAuth2LoginSuccessHandler;
+import org.techm.samples.service.auth.CustomOidcUserService;
 
 @Configuration
 @EnableWebSecurity
@@ -33,25 +29,22 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
-    private final UserInfoRepository userRepository;
-    private final OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService;
     private final ClientRegistrationRepository clientRegRepo;
+    private final CustomOidcUserService  customOidcUserService;
 
     @Autowired
     public SecurityConfig(
         @Lazy JwtAuthFilter jwtAuthFilter,
         UserDetailsService userDetailsService,
         PasswordEncoder passwordEncoder,
-        UserInfoRepository userRepository,
-        OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService,
-        ClientRegistrationRepository clientRegRepo
+        ClientRegistrationRepository clientRegRepo,
+        CustomOidcUserService  customOidcUserService
     ) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
-        this.userRepository = userRepository;
-        this.customOAuth2UserService = customOAuth2UserService;
         this.clientRegRepo = clientRegRepo;
+        this.customOidcUserService=customOidcUserService;
     }
 
     @Bean
@@ -111,16 +104,14 @@ public class SecurityConfig {
           )
           .oauth2Login(oauth -> oauth
             .loginPage("/auth/loginPage")
-            // Force Google to show account selector every time
             .authorizationEndpoint(endpoint -> endpoint
               .authorizationRequestResolver(
                 customAuthRequestResolver(clientRegRepo)
               )
             )
             .userInfoEndpoint(u -> u
-              .userService(customOAuth2UserService)
+              .oidcUserService(customOidcUserService)
             )
-            .successHandler(new OAuth2LoginSuccessHandler(userRepository))
           )
           .logout(lo -> lo
             .logoutUrl("/logout")
