@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -14,13 +13,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
-import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.techm.samples.filter.JwtAuthFilter;
 import org.techm.samples.service.auth.CustomOidcUserService;
+import org.techm.samples.service.auth.OAuth2LoginSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -29,112 +26,61 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
-    private final ClientRegistrationRepository clientRegRepo;
-    private final CustomOidcUserService  customOidcUserService;
+    private final CustomOidcUserService customOidcUserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Autowired
     public SecurityConfig(
-        @Lazy JwtAuthFilter jwtAuthFilter,
-        UserDetailsService userDetailsService,
-        PasswordEncoder passwordEncoder,
-        ClientRegistrationRepository clientRegRepo,
-        CustomOidcUserService  customOidcUserService
+            @Lazy JwtAuthFilter jwtAuthFilter,
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder,
+            CustomOidcUserService customOidcUserService,
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler // Injected the new handler
     ) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
-        this.clientRegRepo = clientRegRepo;
-        this.customOidcUserService=customOidcUserService;
+        this.customOidcUserService = customOidcUserService;
+        this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-          .csrf(cs -> cs.disable())
-          .authorizeHttpRequests(auth -> auth
-        		  .requestMatchers(
-        	              "/auth/generateToken",
-        	              "/auth/registerPage",
-        	              "/auth/registerUser",
-        	              "/auth/loginPage",
-        	              "/auth/loginUser",
-        	              "/css/**",
-        	              "/js/**",
-        	              "/images/**",
-        	              "/api/users/**"
-        	            ).permitAll()
+                .csrf(cs -> cs.disable())
+                // 1. Set session management to STATELESS
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // 2. Permit all authentication-related endpoints
+                        .requestMatchers(
+                                "/auth/**",
+                                "/oauth2/**",
+                                "/login",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**"
+                        ).permitAll()
+                        // 3. Secure all other endpoints
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // 4. Configure OAuth2 to use the custom success handler
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/auth/loginPage")
+                        .userInfoEndpoint(u -> u.oidcUserService(customOidcUserService))
+                        .successHandler(oAuth2LoginSuccessHandler) // This will handle JWT creation
+                )
+                // 5. Update logout to clear the JWT cookie
+                .logout(lo -> lo
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/auth/loginPage")
+                        .deleteCookies("jwt-token") // Important: clear the cookie
+                        .permitAll()
+                );
 
-        	            .requestMatchers("/login/oauth2/**").permitAll()
-        	            .requestMatchers("/products/admin/**").hasAuthority("ADMIN")
-        	            .requestMatchers("/api/products/admin/**", "/api/categories/admin/**")
-        	              .hasAuthority("ADMIN")
-
-        	           
-        	            .requestMatchers(
-        	              "/", "/home",
-        	              "/category/**",
-        	              "/product/**",
-        	              "/products",
-        	              "/products/list",
-        	              "/products/search",
-        	              "/products/price-range",
-        	              "/products/top-rated",
-        	              "/wishlist"
-        	            ).authenticated()
-
-        	            
-        	            .requestMatchers(HttpMethod.GET,    "/api/reviews/product/**")
-        	              .authenticated()
-        	            .requestMatchers(HttpMethod.POST,   "/api/reviews/product/**")
-        	              .hasAuthority("CUSTOMER")
-        	            .requestMatchers(HttpMethod.DELETE, "/api/reviews/**")
-        	              .hasAnyAuthority("ADMIN", "CUSTOMER")
-            .anyRequest().authenticated()
-          )
-          .sessionManagement(sess ->
-            sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-          )
-          .authenticationProvider(authenticationProvider())
-          .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-          .formLogin(fl -> fl
-            .loginPage("/auth/loginPage")
-            .loginProcessingUrl("/auth/loginUser")
-            .defaultSuccessUrl("/", true)
-            .permitAll()
-          )
-          .oauth2Login(oauth -> oauth
-            .loginPage("/auth/loginPage")
-            .authorizationEndpoint(endpoint -> endpoint
-              .authorizationRequestResolver(
-                customAuthRequestResolver(clientRegRepo)
-              )
-            )
-            .userInfoEndpoint(u -> u
-              .oidcUserService(customOidcUserService)
-            )
-          )
-          .logout(lo -> lo
-            .logoutUrl("/logout")
-            .logoutSuccessUrl("/auth/loginPage")
-            .permitAll()
-          );
-
+        // 6. Removed the .formLogin() configuration
         return http.build();
-    }
-
-    @Bean
-    public OAuth2AuthorizationRequestResolver customAuthRequestResolver(
-            ClientRegistrationRepository repo) {
-        DefaultOAuth2AuthorizationRequestResolver resolver =
-            new DefaultOAuth2AuthorizationRequestResolver(
-                repo, "/oauth2/authorization"
-            );
-        resolver.setAuthorizationRequestCustomizer(customizer ->
-            customizer.additionalParameters(params ->
-                params.put("prompt", "select_account")
-            )
-        );
-        return resolver;
     }
 
     @Bean
@@ -147,7 +93,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-        AuthenticationConfiguration config
+            AuthenticationConfiguration config
     ) throws Exception {
         return config.getAuthenticationManager();
     }

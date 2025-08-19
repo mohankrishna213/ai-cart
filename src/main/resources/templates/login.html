@@ -85,10 +85,10 @@
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
-    .alert-warning {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeeba;
+    .alert-success {
+      background: #86e190;
+      color: #087101;
+      border: 1px solid #72e443;
     }
     
   </style>
@@ -98,14 +98,9 @@
   <div class="container">
     <div class="login-box">
 
-      <div th:if="${errorMessage}"
-           class="alert alert-danger"
-           th:text="${errorMessage}">
-      </div>
-
-      <div th:if="${param.error}"
-           class="alert alert-warning">
-        Invalid credentials. Please try again.
+      <div id="errorMessage" class="alert alert-danger" style="display:none;"></div>
+      <div th:if="${param.registration_success}" class="alert alert-success">
+        Registration successful! Please log in.
       </div>
 
       <!-- Logo -->
@@ -113,23 +108,11 @@
            alt="Tech Mahindra Logo" />
 
       <!-- Login Form -->
-      <form th:action="@{/auth/loginUser}"
-            th:object="${authRequest}"
-            method="post">
+      <form id="loginForm" method="post">
         <label for="username">Your Email</label>
-        <input type="text"
-               id="username"
-               th:field="*{username}"
-               placeholder="Enter your email or username"
-               required />
-
+        <input type="email" id="username" name="username" placeholder="Enter your email" required />
         <label for="password">Your Password</label>
-        <input type="password"
-               id="password"
-               th:field="*{password}"
-               placeholder="Password"
-               required />
-
+        <input type="password" id="password" name="password" placeholder="Password" required />
         <button type="submit">Login</button>
       </form>
 
@@ -161,6 +144,54 @@
 
     </div>
   </div>
+  <script>
+    // Add an event listener to the login form
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
+      // Prevent the default form submission which reloads the page
+      event.preventDefault();
 
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('errorMessage');
+
+      // Check if the errorDiv exists before trying to hide it
+      if (errorDiv) {
+        errorDiv.style.display = 'none'; // Hide previous errors
+      }
+
+      try {
+        // Send the login request to our new endpoint
+        const response = await fetch('/auth/loginUser', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // If login is successful, set the token in a cookie
+          document.cookie = `jwt-token=${data.token}; path=/; max-age=3600; SameSite=Lax`; // 1 hour expiry
+          // Redirect to the home page
+          window.location.href = '/';
+        } else {
+          // If there's an error, display it, but only if the errorDiv exists
+          if (errorDiv) {
+            errorDiv.textContent = data.error || 'Login failed. Please try again.';
+            errorDiv.style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.error('Login request failed:', error);
+        // Display a generic error if the request fails, but only if the errorDiv exists
+        if (errorDiv) {
+          errorDiv.textContent = 'An unexpected error occurred. Please try again later.';
+          errorDiv.style.display = 'block';
+        }
+      }
+    });
+  </script>
 </body>
 </html>
