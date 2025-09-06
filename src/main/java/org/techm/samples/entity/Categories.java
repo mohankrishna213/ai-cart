@@ -3,6 +3,7 @@ package org.techm.samples.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,6 +24,7 @@ public class Categories {
 	private LocalDateTime updated_at;
 	
 	@OneToMany(mappedBy = "category",cascade = CascadeType.ALL,orphanRemoval = true)
+    @JsonIgnore
 	private List<Products> products;
 	
 	@PrePersist

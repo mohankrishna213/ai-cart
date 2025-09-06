@@ -3,6 +3,7 @@ package org.techm.samples.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -38,9 +39,11 @@ public class Products {
 	
 	@OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
 	@JsonManagedReference("reviews-product")
+    @JsonIgnore
 	private List<Reviews> reviews;
 	
 	@OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
+    @JsonIgnore
 	private List<Wishlist_items> wishlist_items;
 	
 	@PrePersist

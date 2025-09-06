@@ -3,6 +3,7 @@ package org.techm.samples.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -32,10 +33,12 @@ public class User {
 	
 	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
 	@JsonManagedReference("reviews-user")
+    @JsonIgnore
 	private List<Reviews> reviews;
 	
 	@OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
 	@JsonManagedReference("wishlist-user")
+    @JsonIgnore
 	private List<Wishlist_items> wishlist_items;
 	
 	@Enumerated(EnumType.STRING)
