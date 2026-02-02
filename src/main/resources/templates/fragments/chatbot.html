@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Chatbot Fragment Definition -->
+<div th:fragment="chatbot">
+    <!-- Floating Bot Button -->
+    <div id="chatbotButton" class="chatbot-button">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Red circle background -->
+            <circle cx="50" cy="50" r="48" fill="#ff0000" stroke="#fff" stroke-width="2"/>
+
+            <!-- Bot head/body -->
+            <rect x="25" y="25" width="50" height="40" rx="10" fill="none" stroke="#fff" stroke-width="2.5"/>
+
+            <!-- Bot eyes -->
+            <circle cx="35" cy="40" r="6" fill="#fff"/>
+            <circle cx="35" cy="40" r="3" fill="#ff0000"/>
+            <circle cx="65" cy="40" r="6" fill="#fff"/>
+            <circle cx="65" cy="40" r="3" fill="#ff0000"/>
+
+            <!-- Bot smile -->
+            <path d="M 35 50 Q 50 55 65 50" stroke="#fff" stroke-width="2" fill="none"/>
+
+            <!-- Speech bubble -->
+            <ellipse cx="75" cy="20" rx="12" ry="10" fill="#fff"/>
+            <path d="M 70 25 L 65 30 L 75 28 Z" fill="#fff"/>
+
+            <!-- BOT text -->
+            <text x="50" y="75" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="12" font-weight="bold">BOT</text>
+        </svg>
+    </div>
+
+    <!-- Chatbot Overlay -->
+    <div id="chatbotOverlay" class="chatbot-overlay" style="display: none;">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <span>🛍️ Product Catalog Bot</span>
+                    <span id="connectionStatus" class="connection-status status-disconnected">Disconnected</span>
+                </div>
+                <button id="closeChatbot" class="close-chat">✕</button>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        Welcome! I'm your shopping assistant. How can I help you find products today?
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input type="text" class="chat-input" id="messageInput" placeholder="Type your message..."/>
+                    <button class="send-button" id="sendButton">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="sendQuickMessage('Show me all categories')">Categories</button>
+                    <button class="quick-action" onclick="sendQuickMessage('What gadgets do you have?')">Gadgets</button>
+                    <button class="quick-action" onclick="sendQuickMessage('Show me products under ₹1000')">Under ₹1000</button>
+                    <button class="quick-action" onclick="sendQuickMessage('What\'s on sale?')">On Sale</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Floating Bot Button */
+        .chatbot-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 999;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            transition: transform 0.3s ease, filter 0.3s ease;
+            animation: bounce 2s infinite;
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        /* Chatbot Overlay */
+        .chatbot-overlay {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 350px;
+            height: 500px;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-container {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #fb294a 0%, #f40228 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .chat-title span:first-child {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .connection-status {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            width: fit-content;
+        }
+
+        .status-connected {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-disconnected {
+            background: #f44336;
+            color: white;
+        }
+
+        .close-chat {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .close-chat:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.assistant {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .user .message-bubble {
+            background: linear-gradient(135deg, #fb294a 0%, #f40228 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .assistant .message-bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .typing-indicator.active {
+            display: inline-block;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .product-recommendations {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .product-card {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateX(5px);
+        }
+
+        .product-card img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .product-price {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fb294a 0%, #f40228 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            padding: 5px 10px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-action:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .chatbot-overlay {
+                width: 100%;
+                height: 100%;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                top: 0;
+                border-radius: 0;
+            }
+
+            .chat-container {
+                border-radius: 0;
+                height: 100vh;
+            }
+
+            .chatbot-button {
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+
+    <script>
+        // Chatbot functionality
+        let sessionId = null;
+        let jwtToken = null;
+        const API_BASE = 'http://localhost:8080';
+
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle chatbot visibility
+            document.getElementById('chatbotButton').addEventListener('click', function() {
+                const overlay = document.getElementById('chatbotOverlay');
+                if (overlay.style.display === 'none' || !overlay.style.display) {
+                    overlay.style.display = 'block';
+                    if (!jwtToken) {
+                        authenticateUser();
+                    }
+                }
+            });
+
+            document.getElementById('closeChatbot').addEventListener('click', function() {
+                document.getElementById('chatbotOverlay').style.display = 'none';
+            });
+
+            // Add event listeners for input and button
+            document.getElementById('messageInput').addEventListener('keypress', handleKeyPress);
+            document.getElementById('sendButton').addEventListener('click', sendMessage);
+        });
+
+        async function authenticateUser() {
+            try {
+                const response = await fetch(`${API_BASE}/api/users/generateToken`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'customer@gmail.com', password: 'customer' })
+                });
+                if (response.ok) {
+                    jwtToken = await response.text();
+                    updateConnectionStatus(true);
+                } else {
+                    updateConnectionStatus(false);
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.textContent = 'Connected';
+                statusElement.className = 'connection-status status-connected';
+            } else {
+                statusElement.textContent = 'Disconnected';
+                statusElement.className = 'connection-status status-disconnected';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || !jwtToken) return;
+
+            input.value = '';
+            input.disabled = true;
+            document.getElementById('sendButton').disabled = true;
+
+            addMessage(message, 'user');
+            showTypingIndicator();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/chatbot/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ message: message, sessionId: sessionId })
+                });
+                const data = await response.json();
+                hideTypingIndicator();
+
+                if (response.ok) {
+                    if (data.sessionId) {
+                        sessionId = data.sessionId;
+                    }
+                    addMessage(data.message, 'assistant', data.recommendations);
+                    if (data.suggestedActions && data.suggestedActions.length > 0) {
+                        addSuggestedActions(data.suggestedActions);
+                    }
+                } else {
+                    addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                console.error('Error sending message:', error);
+                addMessage('Connection error. Please check your connection and try again.', 'assistant');
+            } finally {
+                input.disabled = false;
+                document.getElementById('sendButton').disabled = false;
+                input.focus();
+            }
+        }
+
+        function addMessage(content, sender, recommendations = null) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            if (sender === "assistant") {
+                bubbleDiv.innerHTML = content;
+            } else {
+                bubbleDiv.textContent = content;
+            }
+
+            messageDiv.appendChild(bubbleDiv);
+
+            if (recommendations && recommendations.length > 0) {
+                const recsDiv = createRecommendationsElement(recommendations);
+                messageDiv.appendChild(recsDiv);
+            }
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function createRecommendationsElement(recommendations) {
+            const recsDiv = document.createElement('div');
+            recsDiv.className = 'product-recommendations';
+            const title = document.createElement('div');
+            title.style.fontWeight = 'bold';
+            title.style.marginBottom = '8px';
+            title.textContent = 'Recommended Products:';
+            recsDiv.appendChild(title);
+
+            recommendations.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = () => getProductDetails(product.productId);
+
+                if (product.imageUrl) {
+                    const img = document.createElement('img');
+                    img.src = product.imageUrl;
+                    img.alt = product.productName;
+                    card.appendChild(img);
+                }
+
+                const info = document.createElement('div');
+                info.className = 'product-info';
+                const name = document.createElement('div');
+                name.className = 'product-name';
+                name.textContent = product.productName;
+                info.appendChild(name);
+                const price = document.createElement('div');
+                price.className = 'product-price';
+                price.textContent = `₹${product.price}`;
+                info.appendChild(price);
+
+                card.appendChild(info);
+                recsDiv.appendChild(card);
+            });
+            return recsDiv;
+        }
+
+        async function getProductDetails(productId) {
+            const input = document.getElementById('messageInput');
+            input.value = `Tell me more about product ID ${productId}`;
+            sendMessage();
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingIndicator';
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator active';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            typingDiv.appendChild(indicator);
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function addSuggestedActions(actions) {
+            console.log('Suggested actions:', actions);
+        }
+    </script>
+</div>
+</body>
+</html>

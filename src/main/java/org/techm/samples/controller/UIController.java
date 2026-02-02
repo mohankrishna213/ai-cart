@@ -384,4 +384,11 @@ public class UIController {
         productService.deleteProduct(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/chatbot")
+    public String showChatbot(Model model) {
+        model.addAttribute("connectionStatus", "Disconnected");
+        model.addAttribute("messages", java.util.Collections.emptyList());
+        return "chatbot";
+    }
 }
