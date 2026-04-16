@@ -14,9 +14,9 @@ import org.mockito.*;
 import org.springframework.data.domain.*;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.techm.samples.entity.Products;
+import org.techm.samples.exception.InvalidPromotionalPriceException;
 import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.repository.ProductsRepository;
-import org.techm.samples.service.products.ProductService;
 import org.techm.samples.service.products.ProductServiceImpl;
 
 
@@ -157,4 +157,106 @@ public class ProductServiceTest {
         assertTrue(opt.isPresent());
         assertEquals(p, opt.get());
     }
+
+    // Promotional Pricing Validation Tests
+    
+    @Test
+    void testUpdateProductWithValidPromotionalPrice() {
+        Products existing = sampleProduct();
+        existing.setPrice(100.0);
+        
+        Products updated = sampleProduct();
+        updated.setPrice(100.0);
+        updated.setPromotionalPrice(79.99);
+        updated.setPromoActive(true);
+        
+        when(productRepo.findById(1L)).thenReturn(Optional.of(existing));
+        when(productRepo.save(any(Products.class))).thenReturn(updated);
+        
+        Products result = service.updateProduct(updated, 1L);
+        
+        assertEquals(79.99, result.getPromotionalPrice());
+        assertTrue(result.isPromoActive());
+        verify(productRepo).save(any(Products.class));
+    }
+    
+    @Test
+    void testUpdateProductRejectsPromotionalPriceGreaterThanStandardPrice() {
+        Products existing = sampleProduct();
+        existing.setPrice(100.0);
+        
+        Products updated = new Products();
+        updated.setPrice(100.0);
+        updated.setPromotionalPrice(150.0); // Greater than standard price
+        updated.setPromoActive(true);
+        
+        when(productRepo.findById(1L)).thenReturn(Optional.of(existing));
+        
+        assertThrows(InvalidPromotionalPriceException.class, 
+                     () -> service.updateProduct(updated, 1L));
+        
+        verify(productRepo, never()).save(any(Products.class));
+    }
+    
+    @Test
+    void testUpdateProductRejectsNegativePromotionalPrice() {
+        Products existing = sampleProduct();
+        existing.setPrice(100.0);
+        
+        Products updated = new Products();
+        updated.setPrice(100.0);
+        updated.setPromotionalPrice(-10.0); // Negative price
+        updated.setPromoActive(true);
+        
+        when(productRepo.findById(1L)).thenReturn(Optional.of(existing));
+        
+        assertThrows(InvalidPromotionalPriceException.class,
+                     () -> service.updateProduct(updated, 1L));
+        
+        verify(productRepo, never()).save(any(Products.class));
+    }
+    
+    @Test
+    void testUpdateProductAcceptsInvalidPriceWhenPromoNotActive() {
+        Products existing = sampleProduct();
+        existing.setPrice(100.0);
+        
+        Products updated = new Products();
+        updated.setPrice(100.0);
+        updated.setPromotionalPrice(150.0); // Greater than standard price, but promo is inactive
+        updated.setPromoActive(false);
+        updated.setName("Updated");
+        updated.setDescription("Updated");
+        updated.setAvailable(true);
+        
+        when(productRepo.findById(1L)).thenReturn(Optional.of(existing));
+        when(productRepo.save(any(Products.class))).thenReturn(updated);
+        
+        Products result = service.updateProduct(updated, 1L);
+        
+        assertEquals(150.0, result.getPromotionalPrice());
+        assertFalse(result.isPromoActive());
+        verify(productRepo).save(any(Products.class));
+    }
+    
+    @Test
+    void testUpdateProductWithZeroPromotionalPrice() {
+        Products existing = sampleProduct();
+        existing.setPrice(100.0);
+        
+        Products updated = new Products();
+        updated.setPrice(100.0);
+        updated.setPromotionalPrice(0.0); // Zero is valid (< 100.0 and >= 0)
+        updated.setPromoActive(true);
+        
+        when(productRepo.findById(1L)).thenReturn(Optional.of(existing));
+        when(productRepo.save(any(Products.class))).thenReturn(updated);
+        
+        Products result = service.updateProduct(updated, 1L);
+        
+        assertEquals(0.0, result.getPromotionalPrice());
+        assertTrue(result.isPromoActive());
+        verify(productRepo).save(any(Products.class));
+    }
 }
+

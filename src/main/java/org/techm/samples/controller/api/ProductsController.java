@@ -197,6 +197,8 @@ public class ProductsController {
     dto.setName(product.getName());
     dto.setDescription(product.getDescription());
     dto.setPrice(product.getPrice());
+    dto.setPromotionalPrice(product.getPromotionalPrice());
+    dto.setIsPromoActive(product.isPromoActive());
     dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
     dto.setAvailable(product.isAvailable());
     dto.setStockQuantity(product.getStockQuantity());
@@ -210,6 +212,8 @@ public class ProductsController {
     product.setName(dto.getName());
     product.setDescription(dto.getDescription());
     product.setPrice(dto.getPrice());
+    product.setPromotionalPrice(dto.getPromotionalPrice());
+    product.setPromoActive(dto.getIsPromoActive() != null ? dto.getIsPromoActive() : false);
     product.setStockQuantity(dto.getStockQuantity());
     product.setImageUrl(dto.getImageUrl());
     product.setAvailable(dto.isAvailable());

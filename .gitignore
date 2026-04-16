@@ -3,3 +3,7 @@
 *.env
 .env.local
 .env.*.local
+/openspec/
+/.github/prompts/*
+/.github/skills/*
+/.postman/

@@ -9,13 +9,13 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.4.3</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
 
     <properties>
         <java.version>21</java.version>
         <jjwt.version>0.11.5</jjwt.version>
-        <spring-ai.version>1.0.0-M3</spring-ai.version>
+        <spring-ai.version>1.1.4</spring-ai.version>
     </properties>
 
     <dependencyManagement>
@@ -31,7 +31,7 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Existing Dependencies -->
+        <!-- Web & UI -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -46,6 +46,8 @@
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
+
+        <!-- Database -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -55,6 +57,8 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- Security & JWT -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -82,6 +86,8 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
+
+        <!-- Cache & Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -99,24 +105,34 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
-        <!-- Spring AI Dependencies -->
+        <!--
+            Spring AI - Google GenAI Chat (Gemma / Gemini via AI Studio)
+            Provides: GoogleGenAiChatModel, auto-configuration for ChatModel bean.
+            Version managed by spring-ai-bom above.
+        -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-core</artifactId>
+            <artifactId>spring-ai-starter-model-google-genai</artifactId>
         </dependency>
 
-        <!-- Spring AI Ollama -->
+        <!--
+            Spring AI - Google GenAI Embeddings (text-embedding-004)
+            Provides: GoogleGenAiTextEmbeddingModel, GoogleGenAiEmbeddingConnectionDetails,
+                      GoogleGenAiTextEmbeddingOptions.
+            NOTE: This is a separate module from the chat module — they do NOT share
+            an API client class. Use GoogleGenAiEmbeddingConnectionDetails for auth here.
+            Correct artifact: spring-ai-google-genai-embedding (NOT starter-model-*-embedding)
+        -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-ollama</artifactId>
+            <artifactId>spring-ai-google-genai-embedding</artifactId>
         </dependency>
 
-        <!-- Spring AI Vector Store - Using Simple Vector Store for this example -->
+        <!-- Vector Store -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-transformers</artifactId>
+            <artifactId>spring-ai-vector-store</artifactId>
         </dependency>
-
 
         <!-- Test Dependencies -->
         <dependency>
@@ -136,17 +152,6 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <build>
         <plugins>
             <plugin>
@@ -155,5 +160,15 @@
             </plugin>
         </plugins>
     </build>
-</project>
 
+<!--    <repositories>-->
+<!--        <repository>-->
+<!--            <id>spring-milestones</id>-->
+<!--            <name>Spring Milestones</name>-->
+<!--            <url>https://repo.spring.io/milestone</url>-->
+<!--            <snapshots>-->
+<!--                <enabled>false</enabled>-->
+<!--            </snapshots>-->
+<!--        </repository>-->
+<!--    </repositories>-->
+</project>

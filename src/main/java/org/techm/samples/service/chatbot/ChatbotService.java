@@ -1,5 +1,7 @@
 package org.techm.samples.service.chatbot;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.messages.Message;
@@ -21,7 +23,6 @@ import org.techm.samples.repository.ProductsRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,30 +43,32 @@ public class ChatbotService {
     @Value("${chatbot.similarity.threshold:0.7}")
     private double similarityThreshold;
 
-    private static final String SYSTEM_PROMPT = """
-            You are an expert product catalog assistant. Your task is to help users find products based on their requests.
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-            Here is your process:
-            1.  **Analyze the User's Query**: Carefully read the user's question to identify all constraints. This includes the product category (e.g., "T-shirts", "bags"), price limits (e.g., "under 800"), and any other keywords (e.g., "stylish", "gaming").
-            2.  **Strictly Filter the Context**: You will be given a block of "Relevant Product Information". You MUST ignore any and all products in this context that do not strictly meet ALL of the user's constraints.
-                * Example 1: If the user asks for "T-shirts under 800", you MUST ignore any T-shirts with a price over 800 and you MUST ignore any items that are not T-shirts (like caps or bags).
-                * Example 2: If the user asks for "bags", you MUST ignore all items that are not bags.
-            3.  **Format the Output**:
-                * If you find matching products after filtering, present them in an HTML unordered list (`<ul>` and `<li>`).
-                * For each product, bold the name with `<b>` tags and include the price.
-                * Do not invent products or information. Only use what is provided in the context.
-            4.  **Handle No Results**: If, after filtering, you find no products that match the user's request, politely inform them that you couldn't find any matching items.
-        """;
+    private static final String SYSTEM_PROMPT = """
+            You are a helpful product catalog assistant.
+            The system retrieves matching products and displays them visually to the user as cards.
+            
+            Your ONLY job is to provide a single, friendly introductory sentence to accompany the product cards.
+            
+            CRITICAL INSTRUCTIONS:
+            1. You MUST output ONLY a valid, raw JSON object.
+            2. DO NOT output any reasoning, chain-of-thought, bullet points, checklists, or markdown.
+            3. The JSON object must contain exactly one key named "message".
+            
+            EXAMPLE OUTPUT:
+            {
+              "message": "Here are some ergonomic products that can help relieve your back pain:"
+            }
+            """;
 
     public ChatbotResponse chat(ChatRequest request) {
         try {
-            // Search for relevant documents using RAG.
+            // 1. Search for relevant documents using RAG
             List<Document> relevantDocs = searchRelevantDocuments(request.getMessage());
-
-            // Build context from relevant documents
             String context = buildContext(relevantDocs);
 
-            // Create messages for the chat
+            // 2. Prepare messages for the LLM
             List<Message> messages = new ArrayList<>();
             messages.add(new SystemMessage(SYSTEM_PROMPT));
 
@@ -73,19 +76,67 @@ public class ChatbotService {
                 request.getConversationHistory().forEach(msg -> messages.add(new UserMessage(msg)));
             }
 
-            String userMessageWithContext = String.format("Context:\n%s\n\nUser Question: %s", context, request.getMessage());
+            // We still pass context so the LLM understands the domain, but it won't list the products
+            String userMessageWithContext = String.format(
+                    "Context (For info only, do not list these):\n%s\n\nUser Question: %s",
+                    context, request.getMessage()
+            );
             messages.add(new UserMessage(userMessageWithContext));
 
-            // Get response from Ollama
+            // 3. Get response from LLM
             Prompt prompt = new Prompt(messages);
             ChatResponse response = chatClient.call(prompt);
 
-            // Extract recommendations from the relevant documents for the UI
+            // 4. Force the LLM output to be extremely clean using JSON parsing
+            String rawText = response.getResult().getOutput().getText();
+            System.out.println(rawText);
+            String cleanedText = "Here are some products you might like:"; // Safe default fallback
+
+            try {
+                if (rawText != null) {
+                    // Strip markdown code blocks if the LLM adds them around the JSON
+                    String jsonStr = rawText.replaceAll("(?i)```json", "").replaceAll("```", "").trim();
+
+                    // Extract just the JSON part in case there's leading/trailing text
+                    int startIdx = jsonStr.indexOf('{');
+                    int endIdx = jsonStr.lastIndexOf('}');
+
+                    if (startIdx != -1 && endIdx != -1 && endIdx >= startIdx) {
+                        jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+                        JsonNode rootNode = objectMapper.readTree(jsonStr);
+                        if (rootNode.has("message")) {
+                            cleanedText = rootNode.get("message").asText().trim();
+                        }
+                    } else {
+                        // Failsafe: if JSON format completely failed, try to find a sentence in quotes
+                        String[] lines = rawText.split("\n");
+                        for (int i = lines.length - 1; i >= 0; i--) {
+                            if (lines[i].contains("\"")) {
+                                int firstQ = lines[i].indexOf('"');
+                                int lastQ = lines[i].lastIndexOf('"');
+                                if (lastQ > firstQ) {
+                                    cleanedText = lines[i].substring(firstQ + 1, lastQ).trim();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to parse LLM JSON response. Falling back to default string.");
+            }
+
+            // 5. Extract the actual product data for the UI cards
             List<ProductRecommendation> recommendations = extractRecommendations(relevantDocs);
 
-            // Build custom response
+            // Override message if no products were found in the database
+            if (recommendations.isEmpty() && !request.getMessage().toLowerCase().matches(".*\\b(hi|hello|hey)\\b.*")) {
+                cleanedText = "Sorry, I couldn't find any products matching your request.";
+            }
+
+            // 6. Build the final response
             ChatbotResponse customResponse = new ChatbotResponse();
-            customResponse.setMessage(response.getResult().getOutput().getContent());
+            customResponse.setMessage(cleanedText);
             customResponse.setRecommendations(recommendations.stream().limit(3).collect(Collectors.toList()));
             customResponse.setContext(context);
 
@@ -100,9 +151,11 @@ public class ChatbotService {
     }
 
     private List<Document> searchRelevantDocuments(String query) {
-        SearchRequest searchRequest = SearchRequest.query(query)
-                .withTopK(maxResults)
-                .withSimilarityThreshold(similarityThreshold);
+        SearchRequest searchRequest = SearchRequest.builder()
+                .query(query)
+                .topK(maxResults)
+                .similarityThreshold(similarityThreshold)
+                .build();
         return vectorStore.similaritySearch(searchRequest);
     }
 
@@ -111,9 +164,8 @@ public class ChatbotService {
             return "No specific product information available.";
         }
         StringBuilder context = new StringBuilder();
-        context.append("Relevant Product Information:\n\n");
         for (Document doc : documents) {
-            context.append(doc.getContent()).append("\n---\n");
+            context.append(doc.getText()).append("\n---\n");
         }
         return context.toString();
     }

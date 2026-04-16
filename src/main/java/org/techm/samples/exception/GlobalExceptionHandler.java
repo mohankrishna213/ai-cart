@@ -49,6 +49,13 @@ public class GlobalExceptionHandler {
     }
 
     
+    @ExceptionHandler(InvalidPromotionalPriceException.class)
+    public ResponseEntity<String> handleInvalidPromotionalPrice(InvalidPromotionalPriceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                             .body(ex.getMessage());
+    }
+
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAllExceptions(Exception ex, WebRequest req) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -1,10 +1,15 @@
 package org.techm.samples.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class ProductsDTO {
     private Long id;
     private String name;
     private String description;
     private Double price;
+    private Double promotionalPrice;
+    private Boolean isPromoActive;
     private Long categoryId;
     private Integer stockQuantity;
     private String imageUrl;
@@ -39,6 +44,20 @@ public class ProductsDTO {
 	}
 	public void setAvailable(boolean available) {
 		this.available = available;
+	}
+	
+	public Double getPromotionalPrice() {
+		return promotionalPrice;
+	}
+	public void setPromotionalPrice(Double promotionalPrice) {
+		this.promotionalPrice = promotionalPrice;
+	}
+	
+	public Boolean getIsPromoActive() {
+		return isPromoActive;
+	}
+	public void setIsPromoActive(Boolean isPromoActive) {
+		this.isPromoActive = isPromoActive;
 	}
 	
     

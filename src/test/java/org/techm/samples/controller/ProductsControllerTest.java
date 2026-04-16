@@ -30,6 +30,7 @@ import java.util.Optional;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.techm.samples.exception.InvalidPromotionalPriceException;
 
 @WebMvcTest(ProductsController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -149,5 +150,123 @@ public class ProductsControllerTest {
                .andExpect(status().isOk())
                .andExpect(jsonPath("$[0].name", is("Headphones")))
                .andExpect(jsonPath("$[0].price", is(199.99)));
+    }
+
+    // Promotional Pricing Integration Tests
+    
+    @Test
+    @WithMockUser
+    void getProductByIdReturnsPromotionalPricingFields() throws Exception {
+        Products product = new Products();
+        product.setId(10L);
+        product.setName("Laptop");
+        product.setDescription("Gaming Laptop");
+        product.setPrice(1200.0);
+        product.setPromotionalPrice(999.99);
+        product.setPromoActive(true);
+        product.setAvailable(true);
+        product.setStockQuantity(5);
+        product.setImageUrl("laptop.jpg");
+
+        Mockito.when(productService.getProductById(10L)).thenReturn(product);
+
+        mockMvc.perform(get("/api/products/10"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.id", is(10)))
+               .andExpect(jsonPath("$.price", is(1200.0)))
+               .andExpect(jsonPath("$.promotionalPrice", is(999.99)))
+               .andExpect(jsonPath("$.isPromoActive", is(true)));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateProductWithValidPromotionalPricing() throws Exception {
+        ProductsDTO dto = new ProductsDTO();
+        dto.setName("Revised Laptop");
+        dto.setDescription("Updated Gaming Laptop");
+        dto.setPrice(1200.0);
+        dto.setPromotionalPrice(899.99);
+        dto.setIsPromoActive(true);
+        dto.setAvailable(true);
+        dto.setStockQuantity(10);
+        dto.setImageUrl("laptop.jpg");
+
+        Products updated = new Products();
+        updated.setId(1L);
+        updated.setName(dto.getName());
+        updated.setDescription(dto.getDescription());
+        updated.setPrice(dto.getPrice());
+        updated.setPromotionalPrice(dto.getPromotionalPrice());
+        updated.setPromoActive(dto.getIsPromoActive());
+        updated.setAvailable(dto.isAvailable());
+        updated.setStockQuantity(dto.getStockQuantity());
+        updated.setImageUrl(dto.getImageUrl());
+
+        Mockito.when(productService.updateProduct(Mockito.any(Products.class), Mockito.eq(1L)))
+               .thenReturn(updated);
+
+        mockMvc.perform(post("/api/products/admin/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(dto)))
+               .andExpect(status().isCreated())
+               .andExpect(jsonPath("$.promotionalPrice", is(899.99)))
+               .andExpect(jsonPath("$.isPromoActive", is(true)));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateProductWithInvalidPromotionalPriceReturnsBadRequest() throws Exception {
+        ProductsDTO dto = new ProductsDTO();
+        dto.setName("Laptop");
+        dto.setDescription("Gaming Laptop");
+        dto.setPrice(1200.0);
+        dto.setPromotionalPrice(1500.0); // Invalid: price >= standard price
+        dto.setIsPromoActive(true);
+        dto.setAvailable(true);
+        dto.setStockQuantity(10);
+        dto.setImageUrl("laptop.jpg");
+
+        Mockito.when(productService.updateProduct(Mockito.any(Products.class), Mockito.eq(1L)))
+               .thenThrow(new InvalidPromotionalPriceException("Promotional price must be less than the standard price"));
+
+        mockMvc.perform(post("/api/products/admin/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(dto)))
+               .andExpect(status().isBadRequest())
+               .andExpect(content().string(containsString("Promotional price must be less than the standard price")));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateProductPromotionalPricingFieldsAreOptional() throws Exception {
+        ProductsDTO dto = new ProductsDTO();
+        dto.setName("Monitor");
+        dto.setDescription("27 inch display");
+        dto.setPrice(299.99);
+        // promotionalPrice and isPromoActive are null/not set
+        dto.setAvailable(true);
+        dto.setStockQuantity(20);
+        dto.setImageUrl("monitor.jpg");
+
+        Products updated = new Products();
+        updated.setId(2L);
+        updated.setName(dto.getName());
+        updated.setDescription(dto.getDescription());
+        updated.setPrice(dto.getPrice());
+        updated.setPromotionalPrice(null); // Optional field not provided
+        updated.setPromoActive(false); // Defaults to false
+        updated.setAvailable(dto.isAvailable());
+        updated.setStockQuantity(dto.getStockQuantity());
+        updated.setImageUrl(dto.getImageUrl());
+
+        Mockito.when(productService.updateProduct(Mockito.any(Products.class), Mockito.eq(2L)))
+               .thenReturn(updated);
+
+        mockMvc.perform(post("/api/products/admin/2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(dto)))
+               .andExpect(status().isCreated())
+               .andExpect(jsonPath("$.price", is(299.99)))
+               .andExpect(jsonPath("$.isPromoActive", is(false)));
     }
 }

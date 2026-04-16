@@ -11,6 +11,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.techm.samples.entity.Products;
+import org.techm.samples.exception.InvalidPromotionalPriceException;
 import org.techm.samples.exception.ResourceNotFoundException;
 import org.techm.samples.repository.ProductsRepository;
 
@@ -70,6 +71,14 @@ public class ProductServiceImpl implements ProductService {
     )
     public Products updateProduct(Products product, Long id) {
         Products existing = getProductById(id);
+        
+        // Validate promotional pricing if it's being updated
+        if (product.getPromotionalPrice() != null || product.isPromoActive()) {
+            validatePromotionalPrice(product.getPrice(), product.getPromotionalPrice(), product.isPromoActive());
+            existing.setPromotionalPrice(product.getPromotionalPrice());
+            existing.setPromoActive(product.isPromoActive());
+        }
+        
         existing.setAvailable(product.isAvailable());
         existing.setName(product.getName());
         existing.setDescription(product.getDescription());
@@ -78,6 +87,38 @@ public class ProductServiceImpl implements ProductService {
         existing.setStockQuantity(product.getStockQuantity());
         existing.setCategory(product.getCategory());
         return productRepo.save(existing);
+    }
+    
+    /**
+     * Validates promotional price constraints.
+     * Rules:
+     * - If isPromoActive is false, promotional price is not validated
+     * - If isPromoActive is true, promotionalPrice must be less than standard price
+     * - Promotional price must not be negative
+     * 
+     * @param standardPrice the product's standard price
+     * @param promotionalPrice the promotional price to validate
+     * @param isPromoActive whether the promotional price is active
+     * @throws InvalidPromotionalPriceException if validation fails
+     */
+    private void validatePromotionalPrice(double standardPrice, Double promotionalPrice, boolean isPromoActive) throws InvalidPromotionalPriceException {
+        // If promo is not active, don't validate the price value
+        if (!isPromoActive) {
+            return;
+        }
+        
+        // If promo is active, price must be validated
+        if (promotionalPrice == null) {
+            throw new InvalidPromotionalPriceException("Promotional price cannot be null when promotional pricing is active");
+        }
+        
+        if (promotionalPrice < 0) {
+            throw new InvalidPromotionalPriceException("Promotional price must not be negative");
+        }
+        
+        if (promotionalPrice >= standardPrice) {
+            throw new InvalidPromotionalPriceException("Promotional price must be less than the standard price");
+        }
     }
 
     @Override

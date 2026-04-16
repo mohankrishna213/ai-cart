@@ -27,6 +27,8 @@ public class Products {
 	private String name;
 	private String description;
 	private double price;
+	private Double promotionalPrice;
+	private boolean isPromoActive = false;
 	private boolean available=true;
 	private Integer stockQuantity=0;
 	private String imageUrl;
@@ -79,6 +81,20 @@ public class Products {
 	}
 	public void setPrice(double price) {
 		this.price = price;
+	}
+	
+	public Double getPromotionalPrice() {
+		return promotionalPrice;
+	}
+	public void setPromotionalPrice(Double promotionalPrice) {
+		this.promotionalPrice = promotionalPrice;
+	}
+	
+	public boolean isPromoActive() {
+		return isPromoActive;
+	}
+	public void setPromoActive(boolean isPromoActive) {
+		this.isPromoActive = isPromoActive;
 	}
 	
 	public Products( String name, String description, double price, boolean available, int stockQuantity,

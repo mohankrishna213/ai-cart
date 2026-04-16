@@ -4,14 +4,7 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.*;
 
 @Entity
 public class Reviews {
@@ -30,6 +23,8 @@ public class Reviews {
 	private User user;
 	
 	private String title;
+
+    @Column(columnDefinition = "TEXT")
 	private String content;
 	private double rating;
 	private LocalDateTime created_at;

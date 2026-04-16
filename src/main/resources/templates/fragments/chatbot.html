@@ -294,11 +294,26 @@
             background: white;
             border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
         }
 
         .product-card:hover {
             transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .product-card:hover .product-view-hint {
+            opacity: 1;
+        }
+
+        .product-view-hint {
+            font-size: 0.75rem;
+            color: #fb294a;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            margin-left: 4px;
         }
 
         .product-card img {
@@ -595,15 +610,18 @@
                 info.appendChild(price);
 
                 card.appendChild(info);
+
+                const viewHint = document.createElement('span');
+                viewHint.className = 'product-view-hint';
+                viewHint.textContent = 'View →';
+                card.appendChild(viewHint);
                 recsDiv.appendChild(card);
             });
             return recsDiv;
         }
 
-        async function getProductDetails(productId) {
-            const input = document.getElementById('messageInput');
-            input.value = `Tell me more about product ID ${productId}`;
-            sendMessage();
+        function getProductDetails(productId) {
+            window.location.href = `/product/${productId}`;
         }
 
         function showTypingIndicator() {
