@@ -12,14 +12,13 @@ public class Reviews {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.EAGER)
 	@JoinColumn(name = "product_id")
 	@JsonBackReference("reviews-product")
 	private Products product;
 	
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id")
-	@JsonBackReference("reviews-user")
 	private User user;
 	
 	private String title;

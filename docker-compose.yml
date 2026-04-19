@@ -6,10 +6,8 @@ services:
     image: mysql:8.0
     container_name: product_catalog_db
     restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: product_catalog
-      # Only set the root password for root!
-      MYSQL_ROOT_PASSWORD: rootpwd
+    env_file:
+      - .env
     ports:
       - "3307:3306"
     volumes:
@@ -49,13 +47,8 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/product_catalog?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpwd
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: redispwd
+    env_file:
+      - .env
     networks:
       - product_catalog_network
 

@@ -326,6 +326,7 @@
                         <p th:text="${review.content}">Review Content</p>
                         <form th:if="${isAdmin 
 				               or (currentUserId != null 
+				                   and review.user != null 
 				                   and currentUserId == review.user.id)}"
 				        th:action="@{/products/{prodId}/reviews/{revId}/remove(
 				                        prodId=${product.id}, 
