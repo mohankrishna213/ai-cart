@@ -57,20 +57,19 @@ public class UIController {
     @Autowired
     private ProductsController apiController;
 
-   
-    @GetMapping({"/", "/home"})
+    @GetMapping({ "/", "/home" })
     public String home(@RequestParam(defaultValue = "0") int page,
-                       @RequestParam(defaultValue = "10") int size,
-                       @RequestParam(defaultValue = "name") String sortBy,
-                       @RequestParam(defaultValue = "asc") String sortDir,
-                       @RequestParam(required = false) String filter,
-                       @RequestParam(required = false) Double minPrice,
-                       @RequestParam(required = false) Double maxPrice,
-                       Model model,
-                       HttpServletRequest request) {
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            Model model,
+            HttpServletRequest request) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String remoteUser = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
+        String remoteUser = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) ? auth.getName() : null;
         model.addAttribute("remoteUser", remoteUser);
         model.addAttribute("categories", categoriesService.getAllCategories());
 
@@ -121,15 +120,11 @@ public class UIController {
         return "home";
     }
 
-
-
-   
     @GetMapping("/logout-success")
     public String logoutSuccess() {
         return "redirect:/auth/loginPage";
     }
 
-    
     @GetMapping("/wishlist")
     public String wishlist(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -146,9 +141,9 @@ public class UIController {
         return "wishlist";
     }
 
-   
     @GetMapping("/category/{categoryId}")
-    public String productsByCategory(@org.springframework.web.bind.annotation.PathVariable Long categoryId, Model model) {
+    public String productsByCategory(@org.springframework.web.bind.annotation.PathVariable Long categoryId,
+            Model model) {
         model.addAttribute("categories", categoriesService.getAllCategories());
         model.addAttribute("products", productService.getProductsByCategory(categoryId));
         model.addAttribute("categoryId", categoryId);
@@ -162,92 +157,82 @@ public class UIController {
         return "products/category";
     }
 
- 
     @GetMapping("/product/{productId}")
     public String productDetail(@PathVariable Long productId, Model model) {
-        
+
         // Fetch product and its reviews
         var product = productService.getProductById(productId);
         model.addAttribute("product", product);
         model.addAttribute("reviews", reviewsService.getReviewsByProduct(product));
-        
+
         // Determine authenticated user’s email
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = null;
-        
+
         if (auth != null && auth.isAuthenticated()
-            && !(auth instanceof AnonymousAuthenticationToken)) {
-            
+                && !(auth instanceof AnonymousAuthenticationToken)) {
+
             Object principal = auth.getPrincipal();
             if (principal instanceof UserInfoDetails) {
                 email = ((UserInfoDetails) principal).getUsername();
-            }
-            else if (principal instanceof OidcUser) {
+            } else if (principal instanceof OidcUser) {
                 email = ((OidcUser) principal).getAttribute("email");
-            }
-            else {
+            } else {
                 email = auth.getName();
             }
         }
-        
+
         User user = (email != null)
-            ? userInfoRepository.findByEmail(email).orElse(null)
-            : null;
-        
+                ? userInfoRepository.findByEmail(email).orElse(null)
+                : null;
+
         boolean inWishlist = false;
         if (user != null) {
             inWishlist = wishlistService
-                .getWishlistByUser(user)
-                .stream()
-                .anyMatch(w -> w.getProduct().getId().equals(productId));
+                    .getWishlistByUser(user)
+                    .stream()
+                    .anyMatch(w -> w.getProduct().getId().equals(productId));
         }
         model.addAttribute("inWishlist", inWishlist);
-        
 
         boolean isAdmin = false;
         if (auth != null && auth.isAuthenticated()) {
             isAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+                    .anyMatch(a -> a.getAuthority().equals("ADMIN"));
         }
         model.addAttribute("isAdmin", isAdmin);
-        
 
         if (user != null) {
             model.addAttribute("currentUserId", user.getId());
         }
-        
+
         return "products/detail";
     }
 
-
-    
     @GetMapping("/products")
     public String allProducts(Model model) {
         model.addAttribute("products", productService.getAllProducts());
         return "products/list";
     }
 
-
     @GetMapping("/products/price-range")
     public String productsByPriceRange(@org.springframework.web.bind.annotation.RequestParam double minPrice,
-                                       @org.springframework.web.bind.annotation.RequestParam double maxPrice,
-                                       Model model) {
+            @org.springframework.web.bind.annotation.RequestParam double maxPrice,
+            Model model) {
         model.addAttribute("products", productService.getProductsByPriceRange(minPrice, maxPrice));
         return "products/list";
     }
 
-    
     @GetMapping("/products/top-rated")
     public String topRatedProducts(Model model) {
         model.addAttribute("products", productService.getTopRatedProducts());
         return "products/list";
     }
 
-    
     @GetMapping("/products/search")
     public String searchProducts(@org.springframework.web.bind.annotation.RequestParam String q, Model model) {
-    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    	boolean isAdmin = false;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = false;
         if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
             isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
         }
@@ -255,20 +240,37 @@ public class UIController {
         model.addAttribute("products", productService.searchProductsByName(q));
         return "products/search";
     }
-    
+
+    @GetMapping("products/wishlist/add-get/{productId}")
+    public String addProductToWishlistGet(@PathVariable Long productId) {
+        String email = resolveEmail();
+        if (email != null) {
+            User user = userInfoRepository.findByEmail(email).orElse(null);
+            Products product = productService.getProductByIdOptional(productId).orElse(null);
+            
+            if (user != null && product != null) {
+                try {
+                    wishlistService.addToWishlist(user, product);
+                } catch (org.techm.samples.exception.DuplicateWishlistException ignored) {
+                }
+            }
+        }
+        return "redirect:/product/" + productId + "?wishlistAdded=true";
+    }
+
     @PostMapping("products/wishlist/add/{productId}")
     public ResponseEntity<?> addProductToWishlist(@PathVariable Long productId, Model model) {
-    	String email = resolveEmail();
+        String email = resolveEmail();
         if (email == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         // 2) Lookup user and product
         User user = userInfoRepository.findByEmail(email)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
 
         Products product = productService.getProductByIdOptional(productId)
-            .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
         // 3) Add to wishlist
         try {
@@ -283,19 +285,18 @@ public class UIController {
             dto.setProductImage(product.getImageUrl());
 
             return ResponseEntity.ok(dto);
-        }
-        catch (DuplicateWishlistException ex) {
+        } catch (DuplicateWishlistException ex) {
             // Already in wishlist
             return ResponseEntity.status(HttpStatus.ALREADY_REPORTED)
-                                 .body(ex.getMessage());
+                    .body(ex.getMessage());
         }
     }
 
     private String resolveEmail() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null
-            || !auth.isAuthenticated()
-            || auth instanceof AnonymousAuthenticationToken) {
+                || !auth.isAuthenticated()
+                || auth instanceof AnonymousAuthenticationToken) {
             return null;
         }
 
@@ -312,17 +313,16 @@ public class UIController {
         // fallback to name()
         return auth.getName();
     }
-    
+
     @PostMapping("/wishlist/remove/{productId}")
     public String removeFromWishlistUI(
-        @PathVariable Long productId,
-        Principal principal
-    ) {
-        
+            @PathVariable Long productId,
+            Principal principal) {
+
         apiController.removeProductFromWishlist(productId, principal);
         return "redirect:/wishlist";
     }
-    
+
     @PostMapping("products/{productId}/reviews/{reviewId}/remove")
     public String removeReview(
             @PathVariable Long productId,
@@ -330,22 +330,23 @@ public class UIController {
             @AuthenticationPrincipal UserInfoDetails userDetails,
             RedirectAttributes redirectAttrs) {
 
-
         reviewsService.deleteReview(reviewId);
 
         return "redirect:/product/" + productId;
     }
-   
+
     @PostMapping("/admin/category/add")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> addCategory(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.entity.Categories category) {
+    public ResponseEntity<?> addCategory(
+            @org.springframework.web.bind.annotation.RequestBody org.techm.samples.entity.Categories category) {
         var saved = categoriesService.addCategory(category);
         return ResponseEntity.ok(saved);
     }
 
     @PostMapping("/admin/category/edit")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> editCategory(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.entity.Categories category) {
+    public ResponseEntity<?> editCategory(
+            @org.springframework.web.bind.annotation.RequestBody org.techm.samples.entity.Categories category) {
         var updated = categoriesService.updateCategory(category, category.getId());
         return ResponseEntity.ok(updated);
     }
@@ -357,10 +358,10 @@ public class UIController {
         return ResponseEntity.ok().build();
     }
 
-    
     @PostMapping("/admin/product/add")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> addProduct(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.dto.ProductsDTO dto) {
+    public ResponseEntity<?> addProduct(
+            @org.springframework.web.bind.annotation.RequestBody org.techm.samples.dto.ProductsDTO dto) {
         if (dto.getCategoryId() == null) {
             return ResponseEntity.badRequest().body("Category ID is required");
         }
@@ -370,7 +371,8 @@ public class UIController {
 
     @PostMapping("/admin/product/edit")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> editProduct(@org.springframework.web.bind.annotation.RequestBody org.techm.samples.dto.ProductsDTO dto) {
+    public ResponseEntity<?> editProduct(
+            @org.springframework.web.bind.annotation.RequestBody org.techm.samples.dto.ProductsDTO dto) {
         if (dto.getCategoryId() == null || dto.getId() == null) {
             return ResponseEntity.badRequest().body("Category ID and Product ID are required");
         }

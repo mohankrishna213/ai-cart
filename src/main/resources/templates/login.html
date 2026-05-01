@@ -1,197 +1,118 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>Tech Mahindra Brand Store – Login</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-    }
-    .container {
-      width: 100%;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-image: url('https://deq64r0ss2hgl.cloudfront.net/images/corporate/pagebackimg_techmbrandstore.jpg');
-      background-size: cover;
-      background-position: center;
-    }
-    .login-box {
-      background: white;
-      width: 400px;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      position: relative;
-      text-align: center;
-    }
-    .login-box img {
-      width: 150px;
-      margin-bottom: 20px;
-    }
-    .login-box label {
-      display: block;
-      text-align: left;
-      margin: 8px 0 4px;
-      color: #444;
-      font-weight: bold;
-    }
-    .login-box input {
-      width: 90%;
-      padding: 12px;
-      margin: 6px 0 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .login-box button {
-      width: 95%;
-      padding: 12px;
-      background-color: black;
-      color: white;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 10px;
-      border-radius: 4px;
-    }
-    .login-box button:hover {
-      background-color: #333;
-    }
-    .register-btn {
-      background-color: #e0e0e0;
-      color: black;
-      margin-top: 10px;
-    }
-    .disclaimer {
-      font-size: 12px;
-      color: #444;
-      margin-top: 20px;
-      text-align: left;
-    }
-    .alert {
-      padding: 12px 16px;
-      margin: 0 auto 20px;
-      width: 90%;
-      border-radius: 4px;
-      text-align: left;
-    }
-    .alert-danger {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    .alert-success {
-      background: #86e190;
-      color: #087101;
-      border: 1px solid #72e443;
-    }
-    
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login – AI Cart</title>
+    <meta name="description" content="Sign in to your AI Cart account.">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/responsive.css}">
 </head>
 <body>
 
-  <div class="container">
+<div class="login-container">
     <div class="login-box">
 
-      <div id="errorMessage" class="alert alert-danger" style="display:none;"></div>
-      <div th:if="${param.registration_success}" class="alert alert-success">
-        Registration successful! Please log in.
-      </div>
+        <div id="errorMessage" class="alert alert-danger" style="display:none;"></div>
+        <div th:if="${param.registration_success}" class="alert alert-success">
+            <i class="fas fa-check-circle"></i> Registration successful! Please log in.
+        </div>
 
-      <!-- Logo -->
-      <img src="https://mma.prnewswire.com/media/2804444/Tech_Mahindra_New_Logo.jpg?p=facebook"
-           alt="Tech Mahindra Logo" />
+        <!-- Logo -->
+        <img th:src="@{/images/Ecommerce_Logo.png}"
+             alt="AI Cart Logo" />
 
-      <!-- Login Form -->
-      <form id="loginForm" method="post">
-        <label for="username">Your Email</label>
-        <input type="email" id="username" name="username" placeholder="Enter your email" required />
-        <label for="password">Your Password</label>
-        <input type="password" id="password" name="password" placeholder="Password" required />
-        <button type="submit">Login</button>
-      </form>
+        <!-- Login Form -->
+        <form id="loginForm" method="post">
+            <label for="username">Email Address</label>
+            <input type="email" id="username" name="username" placeholder="you@example.com" required />
 
-      <!-- Register Link -->
-      <form th:action="@{/auth/registerPage}" method="get">
-        <button type="submit" class="register-btn">
-          Don't have an account? Register one
-        </button>
-      </form>
-      <div class="oauth">
-      <div style="margin-top:10px">OR</div>
-	      <div class="oauth-login">
-			  <button><a th:href="@{/oauth2/authorization/google}" style="text-decoration: none; color: #fff;">
-			    <i class="fab fa-google"></i>    Login with Google
-			  </a></button>
-		  </div>
-	  </div>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required />
 
-      <!-- Disclaimer -->
-      <div class="disclaimer">
-        <strong>Disclaimer</strong><br>
-        This Product Catalog is part of a capstone academic project developed
-        for learning and demonstration purposes only. All products, brands,
-        images, prices, and descriptions shown here are entirely fictional
-        and do not represent any real commercial offering. This platform is
-        not intended for actual sales, transactions, or marketing, and should
-        not be interpreted as a functioning e-commerce website.
-      </div>
+            <button type="submit">
+                <i class="fas fa-sign-in-alt"></i> &nbsp;Sign In
+            </button>
+        </form>
+
+        <!-- Register Link -->
+        <form th:action="@{/auth/registerPage}" method="get">
+            <button type="submit" class="register-btn">
+                Don't have an account? <strong>Register</strong>
+            </button>
+        </form>
+
+        <div class="oauth">
+            <div>OR</div>
+            <div class="oauth-login">
+                <button>
+                    <a th:href="@{/oauth2/authorization/google}" style="text-decoration: none; color: #fff;">
+                        <i class="fab fa-google"></i> Continue with Google
+                    </a>
+                </button>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <strong>Disclaimer</strong><br>
+            This Product Catalog is part of a capstone academic project developed
+            for learning and demonstration purposes only. All products, brands,
+            images, prices, and descriptions shown here are entirely fictional
+            and do not represent any real commercial offering.
+        </div>
 
     </div>
-  </div>
-  <script>
-    // Add an event listener to the login form
+</div>
+
+<script>
     document.getElementById('loginForm').addEventListener('submit', async function(event) {
-      // Prevent the default form submission which reloads the page
-      event.preventDefault();
+        event.preventDefault();
 
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const errorDiv = document.getElementById('errorMessage');
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('errorMessage');
+        const submitBtn = this.querySelector('button[type="submit"]');
 
-      // Check if the errorDiv exists before trying to hide it
-      if (errorDiv) {
-        errorDiv.style.display = 'none'; // Hide previous errors
-      }
+        if (errorDiv) errorDiv.style.display = 'none';
 
-      try {
-        // Send the login request to our new endpoint
-        const response = await fetch('/auth/loginUser', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username, password }),
-        });
+        // Visual feedback
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> &nbsp;Signing in...';
 
-        const data = await response.json();
+        try {
+            const response = await fetch('/auth/loginUser', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
 
-        if (response.ok) {
-          // If login is successful, set the token in a cookie
-          document.cookie = `jwt-token=${data.token}; path=/; max-age=3600; SameSite=Lax`; // 1 hour expiry
-          // Redirect to the home page
-          window.location.href = '/';
-        } else {
-          // If there's an error, display it, but only if the errorDiv exists
-          if (errorDiv) {
-            errorDiv.textContent = data.error || 'Login failed. Please try again.';
-            errorDiv.style.display = 'block';
-          }
+            const data = await response.json();
+
+            if (response.ok) {
+                document.cookie = `jwt-token=${data.token}; path=/; max-age=3600; SameSite=Lax`;
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectUrl = urlParams.get('redirect') || '/';
+                window.location.href = redirectUrl;
+            } else {
+                if (errorDiv) {
+                    errorDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + (data.error || 'Login failed. Please try again.');
+                    errorDiv.style.display = 'block';
+                }
+            }
+        } catch (error) {
+            console.error('Login request failed:', error);
+            if (errorDiv) {
+                errorDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> An unexpected error occurred. Please try again later.';
+                errorDiv.style.display = 'block';
+            }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> &nbsp;Sign In';
         }
-      } catch (error) {
-        console.error('Login request failed:', error);
-        // Display a generic error if the request fails, but only if the errorDiv exists
-        if (errorDiv) {
-          errorDiv.textContent = 'An unexpected error occurred. Please try again later.';
-          errorDiv.style.display = 'block';
-        }
-      }
     });
-  </script>
+</script>
+
 </body>
 </html>

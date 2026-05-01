@@ -32,13 +32,11 @@ public class ProductDocumentLoader {
     public List<Document> loadProductDocuments() {
         List<Document> documents = new ArrayList<>();
 
-        // Load all products as documents
         List<Products> products = productsRepository.findAll();
         for (Products product : products) {
             documents.add(createProductDocument(product));
         }
 
-        // Load all categories as documents
         List<Categories> categories = categoriesRepository.findAll();
         for (Categories category : categories) {
             documents.add(createCategoryDocument(category));
@@ -62,7 +60,6 @@ public class ProductDocumentLoader {
             metadata.put("categoryName", product.getCategory().getName());
         }
 
-        // Calculate average rating if reviews exist
         List<Reviews> reviews = reviewsRepository.findAllByProduct(product);
         if (!reviews.isEmpty()) {
             double avgRating = reviews.stream()
@@ -73,7 +70,6 @@ public class ProductDocumentLoader {
             metadata.put("reviewCount", reviews.size());
         }
 
-        // Create searchable content
         StringBuilder content = new StringBuilder();
         content.append("Product: ").append(product.getName()).append("\n");
         content.append("Description: ").append(product.getDescription()).append("\n");
@@ -86,15 +82,18 @@ public class ProductDocumentLoader {
         }
 
         if (!reviews.isEmpty()) {
-            content.append("Customer Reviews: ").append(reviews.size()).append(" reviews");
             double avgRating = reviews.stream()
                     .mapToDouble(Reviews::getRating)
                     .average()
                     .orElse(0.0);
+            content.append("Customer Reviews: ").append(reviews.size()).append(" reviews");
             content.append(" with average rating of ").append(String.format("%.1f", avgRating)).append(" stars\n");
         }
 
-        return new Document(content.toString(), metadata);
+        // FIX: Use deterministic ID "product-{dbId}" so Pinecone upserts on re-add
+        // instead of creating a new duplicate document on every app startup.
+        String deterministicId = "product-" + product.getId();
+        return new Document(deterministicId, content.toString(), metadata);
     }
 
     private Document createCategoryDocument(Categories category) {
@@ -103,7 +102,6 @@ public class ProductDocumentLoader {
         metadata.put("type", "category");
         metadata.put("name", category.getName());
 
-        // Count products in category
         List<Products> categoryProducts = productsRepository.findByCategoryId(category.getId());
         metadata.put("productCount", categoryProducts.size());
 
@@ -115,20 +113,30 @@ public class ProductDocumentLoader {
         if (!categoryProducts.isEmpty()) {
             content.append("Products in this category: ");
             content.append(categoryProducts.stream()
-                    .limit(10) // Limit to first 10 products
+                    .limit(10)
                     .map(Products::getName)
                     .collect(Collectors.joining(", ")));
         }
 
-        return new Document(content.toString(), metadata);
+        // FIX: deterministic ID for categories too
+        String deterministicId = "category-" + category.getId();
+        return new Document(deterministicId, content.toString(), metadata);
     }
 
     public void updateProductDocument(Products product, VectorStore vectorStore) {
-        // Remove old document if exists
-        vectorStore.delete(List.of(String.valueOf(product.getId())));
-
-        // Add updated document
+        // With deterministic IDs, add() will upsert — no need to delete first
         Document updatedDoc = createProductDocument(product);
         vectorStore.add(List.of(updatedDoc));
+        System.out.println("✅ Updated product document: " + product.getName());
+    }
+
+    public void deleteProductDocument(Long productId, VectorStore vectorStore) {
+        try {
+            // FIX: delete by the correct deterministic ID, not the raw DB numeric id
+            vectorStore.delete(List.of("product-" + productId));
+            System.out.println("✅ Deleted product document from vector store (ID: product-" + productId + ")");
+        } catch (Exception e) {
+            System.err.println("❌ Error deleting product document: " + e.getMessage());
+        }
     }
 }

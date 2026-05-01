@@ -23,6 +23,7 @@ import org.techm.samples.repository.ProductsRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,7 +41,7 @@ public class ChatbotService {
     @Value("${chatbot.context.max-results:5}")
     private int maxResults;
 
-    @Value("${chatbot.similarity.threshold:0.7}")
+    @Value("${chatbot.similarity.threshold:0.5}")
     private double similarityThreshold;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -57,15 +58,20 @@ public class ChatbotService {
             3. The JSON object must contain exactly one key named "message".
             
             EXAMPLE OUTPUT:
-            {
-              "message": "Here are some ergonomic products that can help relieve your back pain:"
-            }
+            {"message": "Here are some ergonomic products that can help relieve your back pain:"}
             """;
 
     public ChatbotResponse chat(ChatRequest request) {
         try {
             // 1. Search for relevant documents using RAG
             List<Document> relevantDocs = searchRelevantDocuments(request.getMessage());
+
+            // DEBUG: log metadata to verify Pinecone is returning correct documents
+            relevantDocs.forEach(doc ->
+                    System.out.println("📦 Doc metadata: " + doc.getMetadata() + " | text preview: "
+                            + (doc.getText() != null ? doc.getText().substring(0, Math.min(60, doc.getText().length())) : "null"))
+            );
+
             String context = buildContext(relevantDocs);
 
             // 2. Prepare messages for the LLM
@@ -76,9 +82,8 @@ public class ChatbotService {
                 request.getConversationHistory().forEach(msg -> messages.add(new UserMessage(msg)));
             }
 
-            // We still pass context so the LLM understands the domain, but it won't list the products
             String userMessageWithContext = String.format(
-                    "Context (For info only, do not list these):\n%s\n\nUser Question: %s",
+                    "Context (for info only, do not list these):\n%s\n\nUser Question: %s",
                     context, request.getMessage()
             );
             messages.add(new UserMessage(userMessageWithContext));
@@ -87,17 +92,18 @@ public class ChatbotService {
             Prompt prompt = new Prompt(messages);
             ChatResponse response = chatClient.call(prompt);
 
-            // 4. Force the LLM output to be extremely clean using JSON parsing
+            // 4. Parse the JSON response from LLM
             String rawText = response.getResult().getOutput().getText();
-            System.out.println(rawText);
-            String cleanedText = "Here are some products you might like:"; // Safe default fallback
+            System.out.println("🤖 LLM raw output: " + rawText);
+            String cleanedText = "Here are some products you might like:";
 
             try {
                 if (rawText != null) {
-                    // Strip markdown code blocks if the LLM adds them around the JSON
-                    String jsonStr = rawText.replaceAll("(?i)```json", "").replaceAll("```", "").trim();
+                    String jsonStr = rawText
+                            .replaceAll("(?i)```json", "")
+                            .replaceAll("```", "")
+                            .trim();
 
-                    // Extract just the JSON part in case there's leading/trailing text
                     int startIdx = jsonStr.indexOf('{');
                     int endIdx = jsonStr.lastIndexOf('}');
 
@@ -107,30 +113,18 @@ public class ChatbotService {
                         if (rootNode.has("message")) {
                             cleanedText = rootNode.get("message").asText().trim();
                         }
-                    } else {
-                        // Failsafe: if JSON format completely failed, try to find a sentence in quotes
-                        String[] lines = rawText.split("\n");
-                        for (int i = lines.length - 1; i >= 0; i--) {
-                            if (lines[i].contains("\"")) {
-                                int firstQ = lines[i].indexOf('"');
-                                int lastQ = lines[i].lastIndexOf('"');
-                                if (lastQ > firstQ) {
-                                    cleanedText = lines[i].substring(firstQ + 1, lastQ).trim();
-                                    break;
-                                }
-                            }
-                        }
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Failed to parse LLM JSON response. Falling back to default string.");
+                System.err.println("⚠️  Failed to parse LLM JSON response, using default message.");
             }
 
-            // 5. Extract the actual product data for the UI cards
+            // 5. Extract product recommendations from retrieved docs
             List<ProductRecommendation> recommendations = extractRecommendations(relevantDocs);
+            System.out.println("✅ Recommendations found: " + recommendations.size());
 
-            // Override message if no products were found in the database
-            if (recommendations.isEmpty() && !request.getMessage().toLowerCase().matches(".*\\b(hi|hello|hey)\\b.*")) {
+            if (recommendations.isEmpty()
+                    && !request.getMessage().toLowerCase().matches(".*\\b(hi|hello|hey)\\b.*")) {
                 cleanedText = "Sorry, I couldn't find any products matching your request.";
             }
 
@@ -143,6 +137,8 @@ public class ChatbotService {
             return customResponse;
 
         } catch (Exception e) {
+            System.err.println("❌ ChatbotService error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            e.printStackTrace();
             ChatbotResponse errorResponse = new ChatbotResponse();
             errorResponse.setMessage("I apologize, but I encountered an error processing your request. Please try again.");
             errorResponse.setError(e.getMessage() + "\n" + (e.getStackTrace().length > 0 ? e.getStackTrace()[0].toString() : ""));
@@ -171,21 +167,99 @@ public class ChatbotService {
     }
 
     private List<ProductRecommendation> extractRecommendations(List<Document> documents) {
-        return documents.stream()
-                .filter(doc -> "product".equals(doc.getMetadata().get("type")))
-                .map(doc -> {
-                    ProductRecommendation rec = new ProductRecommendation();
-                    rec.setProductId((Long) doc.getMetadata().get("id"));
-                    rec.setProductName((String) doc.getMetadata().get("name"));
-                    rec.setPrice((Double) doc.getMetadata().get("price"));
-                    rec.setImageUrl((String) doc.getMetadata().get("imageUrl"));
-                    rec.setAvailable((Boolean) doc.getMetadata().get("available"));
-                    if (doc.getMetadata().containsKey("averageRating")) {
-                        rec.setRating((Double) doc.getMetadata().get("averageRating"));
-                    }
-                    return rec;
-                })
-                .collect(Collectors.toList());
+        List<ProductRecommendation> recommendations = new ArrayList<>();
+
+        for (Document doc : documents) {
+            Map<String, Object> metadata = doc.getMetadata();
+            String text = doc.getText() != null ? doc.getText() : "";
+
+            // FIX: Determine product type via metadata OR text content as fallback.
+            // Pinecone may not always return all metadata fields.
+            boolean isProduct = "product".equals(metadata.get("type"))
+                    || (text.contains("Product:") && text.contains("Price:") && text.contains("Stock:"));
+
+            if (!isProduct) continue;
+
+            ProductRecommendation rec = new ProductRecommendation();
+
+            Object idObj = metadata.get("id");
+            if (idObj instanceof Number) {
+                rec.setProductId(((Number) idObj).longValue());
+            } else if (idObj != null) {
+                try {
+                    rec.setProductId(Long.parseLong(idObj.toString()));
+                } catch (NumberFormatException ignored) {}
+            }
+            
+            if (rec.getProductId() == null && doc.getId() != null && doc.getId().startsWith("product-")) {
+                try {
+                    rec.setProductId(Long.parseLong(doc.getId().replace("product-", "")));
+                } catch (NumberFormatException ignored) {}
+            }
+
+            // Name — fallback to text parsing if metadata missing
+            Object nameObj = metadata.get("name");
+            if (nameObj instanceof String) {
+                rec.setProductName((String) nameObj);
+            } else {
+                rec.setProductName(extractLineValue(text, "Product:"));
+            }
+
+            // Price — fallback to text parsing if metadata missing
+            Object priceObj = metadata.get("price");
+            if (priceObj instanceof Number) {
+                rec.setPrice(((Number) priceObj).doubleValue());
+            } else {
+                String priceStr = extractLineValue(text, "Price:");
+                if (priceStr != null) {
+                    try {
+                        rec.setPrice(Double.parseDouble(
+                                priceStr.replace("$", "").replace("₹", "").trim()));
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            // Image URL
+            Object imageObj = metadata.get("imageUrl");
+            if (imageObj instanceof String) {
+                rec.setImageUrl((String) imageObj);
+            }
+
+            // Available — Pinecone may return as String "true"/"false"
+            Object availableObj = metadata.get("available");
+            if (availableObj instanceof Boolean) {
+                rec.setAvailable((Boolean) availableObj);
+            } else if (availableObj instanceof String) {
+                rec.setAvailable(Boolean.parseBoolean((String) availableObj));
+            } else {
+                String availStr = extractLineValue(text, "Available:");
+                rec.setAvailable(availStr != null && availStr.trim().equalsIgnoreCase("Yes"));
+            }
+
+            // Rating
+            Object ratingObj = metadata.get("averageRating");
+            if (ratingObj instanceof Number) {
+                rec.setRating(((Number) ratingObj).doubleValue());
+            }
+
+            recommendations.add(rec);
+        }
+
+        return recommendations;
+    }
+
+    /**
+     * Extracts the value after a label from a multiline text block.
+     * e.g. extractLineValue("Product: Dumbbell\nPrice: $25", "Product:") → "Dumbbell"
+     */
+    private String extractLineValue(String text, String label) {
+        if (text == null || label == null) return null;
+        for (String line : text.split("\n")) {
+            if (line.startsWith(label)) {
+                return line.substring(label.length()).trim();
+            }
+        }
+        return null;
     }
 
     @Cacheable(value = "product-suggestions", key = "#category")

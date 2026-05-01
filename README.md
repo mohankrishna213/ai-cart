@@ -21,7 +21,8 @@ This is a Spring Boot application for managing a product catalog with AI-powered
    - Redis password
 
 3. **Local Development**
-   - Make sure MySQL and Redis are running locally
+   - Make sure MySQL is running locally
+   - For Redis, either run a local Redis instance or point to a cloud Redis service via `.env`
    - Run the application:
      ```bash
      mvn spring-boot:run

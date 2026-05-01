@@ -51,17 +51,30 @@ public class SecurityConfig {
                 // 1. Set session management to STATELESS
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 2. Permit all authentication-related endpoints
+                        // 2. Permit all authentication-related endpoints and public views
                         .requestMatchers(
                                 "/auth/**",
                                 "/oauth2/**",
                                 "/login",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                "/",
+                                "/home",
+                                "/product/**",
+                                "/products/**",
+                                "/category/**",
+                                "/chatbot/**",
+                                "/api/reviews/product/**"
                         ).permitAll()
-                        // 3. Secure all other endpoints
-                        .anyRequest().authenticated()
+                        .requestMatchers("/wishlist/**", "/admin/**", "/products/wishlist/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/reviews/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/reviews/**").authenticated()
+                        // 3. Optional: permit any request that falls through (or restrict to known)
+                        .anyRequest().permitAll()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint("/auth/loginPage"))
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

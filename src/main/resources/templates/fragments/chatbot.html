@@ -31,7 +31,7 @@
     </div>
 
     <!-- Chatbot Overlay -->
-    <div id="chatbotOverlay" class="chatbot-overlay" style="display: none;">
+    <div id="chatbotOverlay" class="chatbot-overlay" style="display: none;" th:data-user="${remoteUser != null ? remoteUser : 'anonymous'}">
         <div class="chat-container">
             <div class="chat-header">
                 <div class="chat-title">
@@ -286,7 +286,7 @@
             border-radius: 10px;
         }
 
-        .product-card {
+        .chat-product-card {
             display: flex;
             align-items: center;
             padding: 8px;
@@ -296,18 +296,21 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
+            flex-direction: row; /* override global */
+            height: auto; /* override global */
+            border: none;
         }
 
-        .product-card:hover {
+        .chat-product-card:hover {
             transform: translateX(5px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
 
-        .product-card:hover .product-view-hint {
+        .chat-product-card:hover .chat-product-view-hint {
             opacity: 1;
         }
 
-        .product-view-hint {
+        .chat-product-view-hint {
             font-size: 0.75rem;
             color: #fb294a;
             opacity: 0;
@@ -316,25 +319,29 @@
             margin-left: 4px;
         }
 
-        .product-card img {
-            width: 50px;
-            height: 50px;
+        .chat-product-card img {
+            width: 50px !important;
+            height: 50px !important;
             object-fit: cover;
             border-radius: 5px;
             margin-right: 10px;
+            transform: none !important; /* override global */
         }
 
-        .product-info {
+        .chat-product-info {
             flex: 1;
+            padding: 0; /* override global */
+            display: block; /* override global */
         }
 
-        .product-name {
+        .chat-product-name {
             font-weight: 600;
             font-size: 0.9rem;
             color: #333;
+            margin-bottom: 2px;
         }
 
-        .product-price {
+        .chat-product-price {
             color: #667eea;
             font-weight: bold;
             font-size: 0.85rem;
@@ -442,15 +449,34 @@
         // Chatbot functionality
         let sessionId = null;
         let jwtToken = null;
-        const API_BASE = 'http://localhost:8080';
+        let userKey = 'anonymous';
+        const API_BASE = window.location.origin;
 
         // Wait for DOM to be ready
         document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('chatbotOverlay');
+            userKey = overlay.getAttribute('data-user') || 'anonymous';
+            const chatMsgs = document.getElementById('chatMessages');
+
+            if (sessionStorage.getItem(userKey + '_botSessionId')) {
+                sessionId = sessionStorage.getItem(userKey + '_botSessionId');
+            }
+            if (sessionStorage.getItem(userKey + '_botJwtToken')) {
+                jwtToken = sessionStorage.getItem(userKey + '_botJwtToken');
+                updateConnectionStatus(true);
+            }
+            if (sessionStorage.getItem(userKey + '_botChatHtml')) {
+                chatMsgs.innerHTML = sessionStorage.getItem(userKey + '_botChatHtml');
+            }
+            
+            // Chatbot overlay always starts closed on page load (user must click to open)
+            overlay.style.display = 'none';
+
             // Toggle chatbot visibility
             document.getElementById('chatbotButton').addEventListener('click', function() {
-                const overlay = document.getElementById('chatbotOverlay');
                 if (overlay.style.display === 'none' || !overlay.style.display) {
                     overlay.style.display = 'block';
+                    sessionStorage.setItem(userKey + '_botOverlayVisible', 'true');
                     if (!jwtToken) {
                         authenticateUser();
                     }
@@ -458,12 +484,27 @@
             });
 
             document.getElementById('closeChatbot').addEventListener('click', function() {
-                document.getElementById('chatbotOverlay').style.display = 'none';
+                overlay.style.display = 'none';
+                sessionStorage.setItem(userKey + '_botOverlayVisible', 'false');
             });
 
             // Add event listeners for input and button
             document.getElementById('messageInput').addEventListener('keypress', handleKeyPress);
             document.getElementById('sendButton').addEventListener('click', sendMessage);
+            
+            // Scroll to bottom on load
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+            // Event delegation to preserve clicks after innerHTML injection
+            chatMsgs.addEventListener('click', function(event) {
+                const card = event.target.closest('.chat-product-card');
+                if (card) {
+                    const productId = card.getAttribute('data-product-id');
+                    if (productId && productId !== 'null' && productId !== 'undefined') {
+                        getProductDetails(productId);
+                    }
+                }
+            });
         });
 
         async function authenticateUser() {
@@ -475,6 +516,7 @@
                 });
                 if (response.ok) {
                     jwtToken = await response.text();
+                    sessionStorage.setItem(userKey + '_botJwtToken', jwtToken);
                     updateConnectionStatus(true);
                 } else {
                     updateConnectionStatus(false);
@@ -535,6 +577,7 @@
                 if (response.ok) {
                     if (data.sessionId) {
                         sessionId = data.sessionId;
+                        sessionStorage.setItem(userKey + '_botSessionId', sessionId);
                     }
                     addMessage(data.message, 'assistant', data.recommendations);
                     if (data.suggestedActions && data.suggestedActions.length > 0) {
@@ -575,6 +618,7 @@
             }
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            sessionStorage.setItem(userKey + '_botChatHtml', messagesContainer.innerHTML);
         }
 
         function createRecommendationsElement(recommendations) {
@@ -588,8 +632,8 @@
 
             recommendations.forEach(product => {
                 const card = document.createElement('div');
-                card.className = 'product-card';
-                card.onclick = () => getProductDetails(product.productId);
+                card.className = 'chat-product-card';
+                card.setAttribute('data-product-id', product.productId);
 
                 if (product.imageUrl) {
                     const img = document.createElement('img');
@@ -599,20 +643,20 @@
                 }
 
                 const info = document.createElement('div');
-                info.className = 'product-info';
+                info.className = 'chat-product-info';
                 const name = document.createElement('div');
-                name.className = 'product-name';
+                name.className = 'chat-product-name';
                 name.textContent = product.productName;
                 info.appendChild(name);
                 const price = document.createElement('div');
-                price.className = 'product-price';
+                price.className = 'chat-product-price';
                 price.textContent = `₹${product.price}`;
                 info.appendChild(price);
 
                 card.appendChild(info);
 
                 const viewHint = document.createElement('span');
-                viewHint.className = 'product-view-hint';
+                viewHint.className = 'chat-product-view-hint';
                 viewHint.textContent = 'View →';
                 card.appendChild(viewHint);
                 recsDiv.appendChild(card);

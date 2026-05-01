@@ -27,6 +27,14 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- FIX: pinecone-client-4.0.1 needs protobuf 4.x (RuntimeVersion$RuntimeDomain is a 4.x class).
+     3.25.5 was WRONG — it doesn't have that class at all. -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>4.29.3</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -128,10 +136,18 @@
             <artifactId>spring-ai-google-genai-embedding</artifactId>
         </dependency>
 
-        <!-- Vector Store -->
+        <!-- Pinecone Vector Store — version managed by spring-ai-bom -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-vector-store</artifactId>
+            <artifactId>spring-ai-pinecone-store</artifactId>
+        </dependency>
+
+        <!-- FIX: pinecone-client-4.0.1 needs protobuf 4.x (RuntimeVersion$RuntimeDomain is a 4.x class).
+             3.25.5 was WRONG — it doesn't have that class at all. -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>4.29.3</version>
         </dependency>
 
         <!-- Test Dependencies -->
@@ -164,6 +180,13 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
             </plugin>
         </plugins>
     </build>
