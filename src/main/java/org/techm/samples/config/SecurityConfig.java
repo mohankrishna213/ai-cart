@@ -45,6 +45,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Lazy
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(cs -> cs.disable())
@@ -97,6 +98,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Lazy
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider prov = new DaoAuthenticationProvider();
         prov.setUserDetailsService(userDetailsService);

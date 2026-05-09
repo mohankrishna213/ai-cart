@@ -21,4 +21,14 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+    "-Xms256m", \
+    "-Xmx256m", \
+    "-XX:+UseG1GC", \
+    "-XX:MaxGCPauseMillis=200", \
+    "-XX:+UseStringDeduplication", \
+    "-XX:+OptimizeStringConcat", \
+    "-XX:MaxMetaspaceSize=128m", \
+    "-XX:CompressedClassSpaceSize=64m", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-jar", "app.jar"]
