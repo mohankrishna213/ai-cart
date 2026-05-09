@@ -8,14 +8,18 @@ import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingOptions;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.pinecone.PineconeVectorStore;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.techm.samples.service.chatbot.ProductDocumentLoader;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Configuration
 public class ChatbotConfig {
@@ -35,7 +39,14 @@ public class ChatbotConfig {
     @Value("${spring.ai.vectorstore.pinecone.namespace:}")
     private String pineconeNamespace;
 
+    @Autowired
+    private ObjectProvider<VectorStore> vectorStoreProvider;
+
+    @Autowired
+    private ObjectProvider<ProductDocumentLoader> documentLoaderProvider;
+
     @Bean
+    @Lazy
     public EmbeddingModel embeddingModel() {
         GoogleGenAiEmbeddingConnectionDetails connectionDetails =
                 GoogleGenAiEmbeddingConnectionDetails.builder()
@@ -51,6 +62,7 @@ public class ChatbotConfig {
     }
 
     @Bean
+    @Lazy
     public VectorStore vectorStore(EmbeddingModel embeddingModel) {
         return PineconeVectorStore.builder(embeddingModel)
                 .apiKey(pineconeApiKey)
@@ -59,28 +71,31 @@ public class ChatbotConfig {
                 .build();
     }
 
-    @Bean
-    public CommandLineRunner initializeVectorStore(
-            VectorStore vectorStore,
-            @Autowired ProductDocumentLoader documentLoader) {
-        return args -> {
+    @EventListener(ApplicationReadyEvent.class)
+    public void initializeVectorStoreAsync(ApplicationReadyEvent ignored) {
+        CompletableFuture.runAsync(() -> {
+            VectorStore vectorStore = vectorStoreProvider.getIfAvailable();
+            ProductDocumentLoader documentLoader = documentLoaderProvider.getIfAvailable();
+
+            if (vectorStore == null || documentLoader == null) {
+                System.err.println("⚠️  Vector store or document loader not available for async initialization.");
+                return;
+            }
+
             try {
-                // CHECK: probe Pinecone with a broad low-threshold search.
-                // If even 1 result comes back, vectors already exist — skip embedding entirely.
                 List<Document> probe = vectorStore.similaritySearch(
                         SearchRequest.builder()
                                 .query("product")
                                 .topK(1)
-                                .similarityThreshold(0.0)  // 0.0 = accept any match
+                                .similarityThreshold(0.0)
                                 .build()
                 );
 
                 if (!probe.isEmpty()) {
                     System.out.println("⏭️  Pinecone already has vectors — skipping embedding & upsert.");
-                    return;  // EXIT EARLY — embedding model never gets called
+                    return;
                 }
 
-                // Only reaches here if Pinecone index is empty (first run or after manual wipe)
                 System.out.println("📭 Pinecone index is empty — loading documents...");
                 List<Document> documents = documentLoader.loadProductDocuments();
 
@@ -93,10 +108,9 @@ public class ChatbotConfig {
                 }
 
             } catch (Exception e) {
-                System.err.println("❌ Error during vector store initialization: " + e.getMessage());
+                System.err.println("❌ Error during async vector store initialization: " + e.getMessage());
                 e.printStackTrace();
-                throw new RuntimeException("Failed to initialize Pinecone vector store", e);
             }
-        };
+        });
     }
 }

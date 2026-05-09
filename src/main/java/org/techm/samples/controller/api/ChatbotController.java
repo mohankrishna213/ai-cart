@@ -1,6 +1,7 @@
 package org.techm.samples.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -23,6 +24,7 @@ public class ChatbotController {
     private ProductDocumentLoader documentLoader;
 
     @Autowired
+    @Lazy
     private VectorStore vectorStore;
 
     @PostMapping("/chat")
