@@ -1,0 +1,77 @@
+name: SRE Diagnostic — Predictive Healing
+
+on:
+  repository_dispatch:
+    types: [kibana_anomaly_alert]
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+jobs:
+  rca-diagnosis:
+    runs-on: ubuntu-latest
+    name: AI-RCA Diagnosis
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install GitHub Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Extract alert payload
+        id: alert
+        run: |
+          echo "RULE_NAME=${{ github.event.client_payload.rule_name }}" >> "$GITHUB_OUTPUT"
+          echo "ERROR_MSG<<EOF" >> "$GITHUB_OUTPUT"
+          echo "${{ github.event.client_payload.error_message }}" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "STACK_TRACE<<EOF" >> "$GITHUB_OUTPUT"
+          echo "${{ github.event.client_payload.stack_trace }}" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "AFFECTED_SERVICE=${{ github.event.client_payload.affected_service }}" >> "$GITHUB_OUTPUT"
+          echo "ALERT_ID=${{ github.event.client_payload.alert_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Run SRE Diagnostic Agent
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          PROMPT=$(cat <<'PROMPT_EOF'
+          You are a Senior SRE analyzing a production alert for the AI-cart Spring Boot e-commerce platform.
+
+          ## Alert Details
+          - **Rule**: ${{ steps.alert.outputs.RULE_NAME }}
+          - **Alert ID**: ${{ steps.alert.outputs.ALERT_ID }}
+          - **Affected Service**: ${{ steps.alert.outputs.AFFECTED_SERVICE }}
+          - **Error Message**: ${{ steps.alert.outputs.ERROR_MSG }}
+          - **Stack Trace**:
+          ```
+          ${{ steps.alert.outputs.STACK_TRACE }}
+          ```
+
+          Analyze this alert against the checked-out codebase. Search for the error in controllers,
+          services, repositories, configuration, and exception handlers. Produce a structured RCA report
+          with: Root Cause Hypothesis, Affected Files & Lines, Recommended Code/Config Changes,
+          and Immediate Operational Steps.
+          PROMPT_EOF
+          )
+
+          copilot --yolo --agent sre-diagnostic-agent -p "$PROMPT" > /tmp/rca-report.md 2>&1 || true
+
+      - name: Append RCA report to GitHub Step Summary
+        run: |
+          echo "## 🤖 AI-Driven SRE Diagnostic Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Alert ID**: ${{ steps.alert.outputs.ALERT_ID }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Rule**: ${{ steps.alert.outputs.RULE_NAME }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Timestamp**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/rca-report.md >> "$GITHUB_STEP_SUMMARY" || echo "⚠️ RCA report generation incomplete — check Copilot CLI logs above." >> "$GITHUB_STEP_SUMMARY"

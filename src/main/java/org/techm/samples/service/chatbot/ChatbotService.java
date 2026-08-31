@@ -2,6 +2,8 @@ package org.techm.samples.service.chatbot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.messages.Message;
@@ -29,6 +31,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ChatbotService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatbotService.class);
 
     @Autowired
     @Lazy
@@ -65,14 +69,22 @@ public class ChatbotService {
             """;
 
     public ChatbotResponse chat(ChatRequest request) {
+        long start = System.currentTimeMillis();
         try {
+            // Input validation — reject messages that are too short
+            if (request.getMessage().trim().length() < 3) {
+                throw new IllegalArgumentException(
+                    "Message too short for processing: minimum 3 characters required, got " + request.getMessage().trim().length());
+            }
+
             // 1. Search for relevant documents using RAG
             List<Document> relevantDocs = searchRelevantDocuments(request.getMessage());
+            log.info("Chatbot question received, vector search returned {} documents", relevantDocs.size());
 
             // DEBUG: log metadata to verify Pinecone is returning correct documents
             relevantDocs.forEach(doc ->
-                    System.out.println("📦 Doc metadata: " + doc.getMetadata() + " | text preview: "
-                            + (doc.getText() != null ? doc.getText().substring(0, Math.min(60, doc.getText().length())) : "null"))
+                    log.debug("Doc metadata: {} | text preview: {}", doc.getMetadata(),
+                            doc.getText() != null ? doc.getText().substring(0, Math.min(60, doc.getText().length())) : "null")
             );
 
             String context = buildContext(relevantDocs);
@@ -97,7 +109,7 @@ public class ChatbotService {
 
             // 4. Parse the JSON response from LLM
             String rawText = response.getResult().getOutput().getText();
-            System.out.println("🤖 LLM raw output: " + rawText);
+            log.debug("LLM raw output: {}", rawText);
             String cleanedText = "Here are some products you might like:";
 
             try {
@@ -119,12 +131,13 @@ public class ChatbotService {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("⚠️  Failed to parse LLM JSON response, using default message.");
+                log.warn("Failed to parse LLM JSON response, using default message.", e);
             }
 
             // 5. Extract product recommendations from retrieved docs
             List<ProductRecommendation> recommendations = extractRecommendations(relevantDocs);
-            System.out.println("✅ Recommendations found: " + recommendations.size());
+            log.info("Chatbot answered in {} ms with {} recommendations (question='{}')",
+                    System.currentTimeMillis() - start, recommendations.size(), request.getMessage());
 
             if (recommendations.isEmpty()
                     && !request.getMessage().toLowerCase().matches(".*\\b(hi|hello|hey)\\b.*")) {
@@ -140,8 +153,7 @@ public class ChatbotService {
             return customResponse;
 
         } catch (Exception e) {
-            System.err.println("❌ ChatbotService error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            e.printStackTrace();
+            log.error("ChatbotService error: {}: {}", e.getClass().getSimpleName(), e.getMessage(), e);
             ChatbotResponse errorResponse = new ChatbotResponse();
             errorResponse.setMessage("I apologize, but I encountered an error processing your request. Please try again.");
             errorResponse.setError(e.getMessage() + "\n" + (e.getStackTrace().length > 0 ? e.getStackTrace()[0].toString() : ""));

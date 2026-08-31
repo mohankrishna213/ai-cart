@@ -4,6 +4,8 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +42,9 @@ import org.techm.samples.service.products.WishlistService;
 @Controller
 @RequestMapping("/api/products")
 public class ProductsController {
+
+	private static final Logger log = LoggerFactory.getLogger(ProductsController.class);
+
 	@Autowired
     private ProductService productService;
 	
@@ -85,14 +90,17 @@ public class ProductsController {
 	@PostMapping("/admin")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ProductsDTO> createProduct(@RequestBody ProductsDTO productsDTO){
+    log.info("Creating product: name={}, price={}", productsDTO.getName(), productsDTO.getPrice());
     Products product = toProductsEntity(productsDTO);
     Products saved = productService.addProduct(product);
+    log.info("Product created with id={}", saved.getId());
     return new ResponseEntity<>(toProductsDTO(saved), HttpStatus.CREATED);
 }
 
 	@PostMapping("/admin/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ProductsDTO> updateProduct(@PathVariable Long id, @RequestBody ProductsDTO productsDTO) {
+    log.info("Updating product id={}", id);
     Products product = toProductsEntity(productsDTO);
     Products updated = productService.updateProduct(product, id);
     return new ResponseEntity<>(toProductsDTO(updated), HttpStatus.CREATED);
@@ -101,6 +109,7 @@ public class ProductsController {
 	@DeleteMapping("/admin/{id}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+	    log.info("Deleting product id={}", id);
 	    productService.deleteProduct(id);
 	    return ResponseEntity.noContent().build();
 	}

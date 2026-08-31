@@ -3,6 +3,8 @@ package org.techm.samples.service.products;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -18,6 +20,8 @@ import org.techm.samples.repository.ProductsRepository;
 @Service
 public class ProductServiceImpl implements ProductService {
 
+    private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
+
     @Autowired
     private ProductsRepository productRepo;
 
@@ -27,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
             @CacheEvict(value = "searchResults", allEntries = true)
     })
     public Products addProduct(Products product) {
+        log.info("Adding product '{}' (evicting product/search caches)", product.getName());
         return productRepo.save(product);
     }
 
@@ -58,6 +63,7 @@ public class ProductServiceImpl implements ProductService {
     })
     public void deleteProduct(Long id) {
         Products prod = getProductById(id);
+        log.info("Deleting product id='{}' name='{}' (evicting product/search caches)", id, prod.getName());
         productRepo.delete(prod);
     }
 
@@ -71,7 +77,8 @@ public class ProductServiceImpl implements ProductService {
     )
     public Products updateProduct(Products product, Long id) {
         Products existing = getProductById(id);
-        
+        log.info("Updating product id='{}' name='{}'", id, product.getName());
+
         // Validate promotional pricing if it's being updated
         if (product.getPromotionalPrice() != null || product.isPromoActive()) {
             validatePromotionalPrice(product.getPrice(), product.getPromotionalPrice(), product.isPromoActive());

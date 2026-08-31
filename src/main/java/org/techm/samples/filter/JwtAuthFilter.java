@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +23,8 @@ import java.util.Arrays;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
@@ -54,8 +58,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 username = jwtService.extractUsername(token);
             } catch (Exception e) {
-                // Could log the exception for debugging if needed
-                System.err.println("Invalid JWT Token: " + e.getMessage());
+                log.warn("Invalid JWT token: {}", e.getMessage());
             }
         }
 
@@ -68,6 +71,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                log.debug("Authenticated user '{}' via JWT for {} {}", username, request.getMethod(), request.getRequestURI());
             }
         }
         filterChain.doFilter(request, response);

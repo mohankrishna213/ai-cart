@@ -1,0 +1,26 @@
+filebeat.inputs:
+  # App writes one JSON object per line to logs/ai-cart.log (LogstashEncoder).
+  # ndjson parser promotes JSON fields (@timestamp, level, logger_name, message,
+  # stack_trace, service_name, ...) to top-level fields in Elasticsearch.
+  - type: filestream
+    id: ai-cart-logs
+    enabled: true
+    paths:
+      - /var/log/app/*.log
+    parsers:
+      - ndjson:
+          keys_under_root: true
+          overwrite_keys: true
+          add_error_key: true
+
+setup.template.settings:
+  index.number_of_shards: 1
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+
+processors:
+  - add_host_metadata: ~
+
+logging.level: info
+logging.to_stderr: true
