@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  webhook-relay:
+    build: ./webhook-relay
+    container_name: product_catalog_webhook_relay
+    env_file:
+      - .env
+    environment:
+      - ES_HOST=http://host.docker.internal:9200
+      - ES_INDEX=filebeat-*
+      - POLL_INTERVAL=30
+      - GITHUB_REPO=mohankrishna213/ai-cart
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
